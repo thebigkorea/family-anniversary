@@ -7,20 +7,16 @@
 <title>가족·지인 기념일 관리</title>
 
 <style>
-
-*{
-  box-sizing:border-box;
-}
+*{ box-sizing:border-box; }
 
 body{
   margin:0;
-  padding:20px;
+  padding:18px;
   background:#f3f5f9;
   font-family:'Malgun Gothic',sans-serif;
   color:#222;
 }
 
-/* PC에서 너무 넓어지는 것 방지 */
 .app-wrap{
   width:100%;
   max-width:520px;
@@ -28,137 +24,114 @@ body{
 }
 
 h1{
-  margin-top:0;
-  margin-bottom:20px;
-  font-size:32px;
-  font-weight:700;
+  margin:0 0 18px;
+  font-size:28px;
 }
 
-/* 카드 */
+h2{
+  margin-top:0;
+  font-size:22px;
+}
+
 .card{
   background:#fff;
-  border-radius:24px;
-  padding:22px;
-  margin-bottom:22px;
+  border-radius:22px;
+  padding:20px;
+  margin-bottom:20px;
   box-shadow:0 4px 18px rgba(0,0,0,0.08);
 }
 
-/* 배지 */
 .badges{
   display:flex;
-  gap:12px;
-  margin-bottom:22px;
+  gap:10px;
+  margin-bottom:18px;
 }
 
 .badge{
   flex:1;
-  border-radius:20px;
-  padding:18px 10px;
+  border-radius:18px;
+  padding:14px 8px;
   text-align:center;
   font-weight:bold;
-  font-size:18px;
+  font-size:16px;
   line-height:1.5;
 }
 
-.badge.today{
-  background:#fff1f1;
-  color:#ff3b30;
-}
-
-.badge.tomorrow{
-  background:#fff4ea;
-  color:#ff7a00;
-}
-
-.badge.week{
-  background:#edf4ff;
-  color:#1d74ff;
-}
-
-/* 입력 */
-.input-group{
-  margin-bottom:16px;
-}
+.today{ background:#fff1f1; color:#ff3b30; }
+.tomorrow{ background:#fff4ea; color:#ff7a00; }
+.week{ background:#edf4ff; color:#1d74ff; }
 
 label{
   display:block;
-  font-size:15px;
+  font-size:14px;
   font-weight:bold;
-  margin-bottom:8px;
+  margin:10px 0 6px;
 }
 
-input,
-select,
-textarea{
+input,select,textarea{
   width:100%;
   border:1px solid #ddd;
   border-radius:14px;
-  padding:15px;
+  padding:14px;
   font-size:16px;
   background:#fff;
 }
 
 textarea{
+  height:80px;
   resize:none;
-  height:90px;
 }
 
-/* 2칸 */
 .row{
   display:flex;
-  gap:12px;
+  gap:10px;
 }
 
-.row .col{
-  flex:1;
-}
+.col{ flex:1; }
 
-/* 버튼 */
 button{
   width:100%;
   border:none;
-  border-radius:16px;
-  padding:16px;
-  font-size:17px;
+  border-radius:15px;
+  padding:15px;
+  font-size:16px;
   font-weight:bold;
   cursor:pointer;
-  transition:0.15s;
 }
 
-button:active{
-  transform:scale(0.98);
+button:active{ transform:scale(0.98); }
+
+.primary{ background:#2563ff; color:#fff; margin-top:14px; }
+.green{ background:#22c55e; color:#fff; }
+.purple{ background:#8b5cf6; color:#fff; }
+.gray{ background:#eef1f5; color:#333; }
+
+.tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:18px;
 }
 
-.primary-btn{
+.tab{
+  flex:1;
+  background:#e9edf5;
+  color:#333;
+}
+
+.tab.active{
   background:#2563ff;
   color:#fff;
 }
 
-.small-btn{
-  flex:1;
-  padding:12px;
-  font-size:14px;
-}
+.section{ display:none; }
+.section.active{ display:block; }
 
-.call-btn{
-  background:#22c55e;
-  color:#fff;
-}
-
-.copy-btn{
-  background:#8b5cf6;
-  color:#fff;
-}
-
-/* 이벤트 */
 .event{
   border-bottom:1px solid #eee;
-  padding:18px 0;
+  padding:16px 0;
 }
 
-.event:last-child{
-  border-bottom:none;
-}
+.event:last-child{ border-bottom:none; }
 
 .event-title{
   font-size:18px;
@@ -166,49 +139,43 @@ button:active{
 }
 
 .event-date{
-  margin-top:6px;
+  margin-top:5px;
   color:#666;
   font-size:14px;
 }
 
 .event-message{
-  margin-top:12px;
+  margin-top:10px;
   background:#f6f7fb;
   border-radius:14px;
-  padding:14px;
+  padding:13px;
   line-height:1.6;
   font-size:15px;
 }
 
 .event-buttons{
   display:flex;
-  gap:10px;
-  margin-top:12px;
+  gap:8px;
+  margin-top:10px;
 }
 
-/* 모바일 */
+.event-buttons button{
+  padding:12px;
+  font-size:14px;
+}
+
+.help{
+  font-size:13px;
+  color:#666;
+  line-height:1.5;
+  margin-top:8px;
+}
+
 @media(max-width:600px){
-
-  body{
-    padding:14px;
-  }
-
-  h1{
-    font-size:26px;
-  }
-
-  .card{
-    padding:18px;
-    border-radius:20px;
-  }
-
-  .badge{
-    font-size:16px;
-    padding:14px 6px;
-  }
-
+  body{ padding:14px; }
+  h1{ font-size:25px; }
+  .card{ padding:18px; }
 }
-
 </style>
 </head>
 
@@ -218,308 +185,282 @@ button:active{
 
 <h1>가족·지인 기념일 관리</h1>
 
-<!-- 배지 -->
 <div class="badges">
+  <div class="badge today" id="todayBadge">오늘<br>0건</div>
+  <div class="badge tomorrow" id="tomorrowBadge">내일<br>0건</div>
+  <div class="badge week" id="weekBadge">7일 이내<br>0건</div>
+</div>
 
-  <div class="badge today" id="todayBadge">
-    오늘<br>0건
+<div class="tabs">
+  <button class="tab active" onclick="showSection('home', this)">기념일</button>
+  <button class="tab" onclick="showSection('person', this)">사람등록</button>
+  <button class="tab" onclick="showSection('anniv', this)">기념일추가</button>
+</div>
+
+<!-- 기념일 목록 -->
+<div id="home" class="section active">
+
+  <div class="card">
+    <h2>다가오는 기념일</h2>
+    <div id="eventList">불러오는 중...</div>
   </div>
 
-  <div class="badge tomorrow" id="tomorrowBadge">
-    내일<br>0건
-  </div>
-
-  <div class="badge week" id="weekBadge">
-    7일 이내<br>0건
-  </div>
-
 </div>
 
-<!-- 입력 -->
-<div class="card">
+<!-- 사람 등록 -->
+<div id="person" class="section">
 
-<h2>인물 등록</h2>
+  <div class="card">
+    <h2>사람 등록</h2>
 
-<div class="input-group">
-<label>이름</label>
-<input type="text" id="name">
-</div>
+    <label>이름</label>
+    <input type="text" id="personName">
 
-<div class="input-group">
-<label>관계</label>
-<input type="text" id="relation"
-placeholder="어머니 / 친구 / 친척 등">
-</div>
+    <label>관계</label>
+    <input type="text" id="personRelation" placeholder="어머니 / 친구 / 친척 등">
 
-<div class="input-group">
-<label>휴대폰번호</label>
-<input type="tel" id="phone">
-</div>
+    <label>휴대폰번호</label>
+    <input type="tel" id="personPhone">
 
-<div class="input-group">
-<label>주소</label>
-<input type="text" id="address">
-</div>
+    <label>주소</label>
+    <input type="text" id="personAddress">
 
-<div class="input-group">
-<label>달력 종류</label>
+    <label>메모</label>
+    <textarea id="personMemo"></textarea>
 
-<select id="birthType">
-  <option value="양력">양력</option>
-  <option value="음력">음력</option>
-</select>
+    <label>선물 취향</label>
+    <input type="text" id="personGift">
 
-</div>
+    <label>주의사항</label>
+    <input type="text" id="personWarning">
 
-<div class="row">
+    <button class="primary" onclick="savePerson()">사람 저장</button>
 
-  <div class="col">
-    <div class="input-group">
-      <label>생일 월</label>
-      <input type="number" id="birthMonth">
-    </div>
-  </div>
-
-  <div class="col">
-    <div class="input-group">
-      <label>생일 일</label>
-      <input type="number" id="birthDay">
+    <div class="help">
+      사람은 한 번만 등록하고, 생일·시험일·결혼기념일 등은 따로 여러 개 추가합니다.
     </div>
   </div>
 
 </div>
 
-<div class="input-group">
+<!-- 기념일 추가 -->
+<div id="anniv" class="section">
 
-<label>윤달 여부</label>
+  <div class="card">
+    <h2>기념일 추가</h2>
 
-<select id="leapMonth">
-  <option value="N">윤달 아님</option>
-  <option value="Y">윤달</option>
-</select>
+    <label>사람 선택</label>
+    <select id="annivPerson">
+      <option value="">사람을 선택하세요</option>
+    </select>
 
-</div>
+    <label>행사구분</label>
+    <input type="text" id="eventType" placeholder="생일 / 시험 / 결혼기념일 / 제사 등">
 
-<div class="input-group">
-<label>기념일 종류</label>
-<input type="text"
-id="eventType"
-placeholder="생일 / 결혼기념일">
-</div>
+    <label>행사명</label>
+    <input type="text" id="eventName" placeholder="예: 어머니 생신, 손주 생일">
 
-<div class="input-group">
-<label>기념일명</label>
-<input type="text"
-id="eventName"
-placeholder="예: 어머니 생신">
-</div>
+    <label>양음력</label>
+    <select id="calendarType">
+      <option value="양력">양력</option>
+      <option value="음력">음력</option>
+    </select>
 
-<div class="input-group">
-<label>메모</label>
-<textarea id="memo"></textarea>
-</div>
+    <div class="row">
+      <div class="col">
+        <label>월</label>
+        <input type="number" id="eventMonth" placeholder="월">
+      </div>
+      <div class="col">
+        <label>일</label>
+        <input type="number" id="eventDay" placeholder="일">
+      </div>
+    </div>
 
-<div class="input-group">
-<label>선물 취향</label>
-<input type="text" id="gift">
-</div>
+    <label>윤달 여부</label>
+    <select id="leapMonth">
+      <option value="N">윤달 아님</option>
+      <option value="Y">윤달</option>
+    </select>
 
-<div class="input-group">
-<label>주의사항</label>
-<input type="text" id="warning">
-</div>
+    <label>알림일수</label>
+    <input type="number" id="alertDays" value="7">
 
-<button
-class="primary-btn"
-onclick="savePerson()">
-저장하기
-</button>
+    <label>메모</label>
+    <textarea id="annivMemo"></textarea>
 
-</div>
-
-<!-- 다가오는 기념일 -->
-<div class="card">
-
-<h2>다가오는 기념일</h2>
-
-<div id="eventList">
-불러오는 중...
-</div>
+    <button class="primary" onclick="saveAnniversary()">기념일 저장</button>
+  </div>
 
 </div>
 
 </div>
 
 <script>
-
 const API_URL =
 "https://script.google.com/macros/s/AKfycbwLF5bl4M9Gwdcfc7ys63tj9_WG5VczrVHu4Ztfjo4Vf5dda-NK7FctQ3P0qTY2X_Q8/exec";
 
-/************************************************
- * 저장
- ************************************************/
+function showSection(id, btn){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+
+  if(id === "anniv"){
+    loadPeople();
+  }
+
+  if(id === "home"){
+    loadEvents();
+  }
+}
+
 async function savePerson(){
-
   const params = new URLSearchParams();
-
   params.append("action","savePerson");
+  params.append("name", document.getElementById("personName").value);
+  params.append("relation", document.getElementById("personRelation").value);
+  params.append("phone", document.getElementById("personPhone").value);
+  params.append("address", document.getElementById("personAddress").value);
+  params.append("memo", document.getElementById("personMemo").value);
+  params.append("gift", document.getElementById("personGift").value);
+  params.append("warning", document.getElementById("personWarning").value);
 
-  params.append("name",
-    document.getElementById("name").value);
-
-  params.append("relation",
-    document.getElementById("relation").value);
-
-  params.append("phone",
-    document.getElementById("phone").value);
-
-  params.append("address",
-    document.getElementById("address").value);
-
-  params.append("birthType",
-    document.getElementById("birthType").value);
-
-  params.append("birthMonth",
-    document.getElementById("birthMonth").value);
-
-  params.append("birthDay",
-    document.getElementById("birthDay").value);
-
-  params.append("leapMonth",
-    document.getElementById("leapMonth").value);
-
-  params.append("eventType",
-    document.getElementById("eventType").value);
-
-  params.append("eventName",
-    document.getElementById("eventName").value);
-
-  params.append("memo",
-    document.getElementById("memo").value);
-
-  params.append("gift",
-    document.getElementById("gift").value);
-
-  params.append("warning",
-    document.getElementById("warning").value);
-
-  const res =
-    await fetch(API_URL + "?" + params.toString());
-
+  const res = await fetch(API_URL + "?" + params.toString());
   const data = await res.json();
 
   alert(data.message);
 
+  document.getElementById("personName").value = "";
+  document.getElementById("personRelation").value = "";
+  document.getElementById("personPhone").value = "";
+  document.getElementById("personAddress").value = "";
+  document.getElementById("personMemo").value = "";
+  document.getElementById("personGift").value = "";
+  document.getElementById("personWarning").value = "";
+
+  loadPeople();
+}
+
+async function loadPeople(){
+  const res = await fetch(API_URL + "?action=getPeople");
+  const data = await res.json();
+
+  const select = document.getElementById("annivPerson");
+  select.innerHTML = `<option value="">사람을 선택하세요</option>`;
+
+  if(!data.people) return;
+
+  data.people.forEach(p=>{
+    select.innerHTML += `
+      <option value="${p.id}">
+        ${p.name} (${p.relation})
+      </option>
+    `;
+  });
+}
+
+async function saveAnniversary(){
+  const personId = document.getElementById("annivPerson").value;
+
+  if(!personId){
+    alert("사람을 먼저 선택하세요.");
+    return;
+  }
+
+  const params = new URLSearchParams();
+  params.append("action","saveAnniversary");
+  params.append("personId", personId);
+  params.append("eventType", document.getElementById("eventType").value);
+  params.append("eventName", document.getElementById("eventName").value);
+  params.append("calendarType", document.getElementById("calendarType").value);
+  params.append("month", document.getElementById("eventMonth").value);
+  params.append("day", document.getElementById("eventDay").value);
+  params.append("leapMonth", document.getElementById("leapMonth").value);
+  params.append("alertDays", document.getElementById("alertDays").value);
+  params.append("memo", document.getElementById("annivMemo").value);
+
+  const res = await fetch(API_URL + "?" + params.toString());
+  const data = await res.json();
+
+  alert(data.message);
+
+  document.getElementById("eventType").value = "";
+  document.getElementById("eventName").value = "";
+  document.getElementById("eventMonth").value = "";
+  document.getElementById("eventDay").value = "";
+  document.getElementById("annivMemo").value = "";
+
   loadEvents();
 }
 
-/************************************************
- * 기념일 조회
- ************************************************/
 async function loadEvents(){
-
-  const res = await fetch(
-    API_URL + "?action=getUpcomingEvents"
-  );
-
+  const res = await fetch(API_URL + "?action=getUpcomingEvents");
   const data = await res.json();
 
-  const list =
-    document.getElementById("eventList");
-
-  if(!data.events || data.events.length === 0){
-
-    list.innerHTML =
-      "예정된 기념일이 없습니다.";
-
-    return;
-  }
+  const list = document.getElementById("eventList");
 
   let todayCount = 0;
   let tomorrowCount = 0;
 
+  if(!data.events || data.events.length === 0){
+    list.innerHTML = "예정된 기념일이 없습니다.";
+    document.getElementById("todayBadge").innerHTML = `오늘<br>0건`;
+    document.getElementById("tomorrowBadge").innerHTML = `내일<br>0건`;
+    document.getElementById("weekBadge").innerHTML = `7일 이내<br>0건`;
+    return;
+  }
+
   let html = "";
 
   data.events.forEach(event=>{
-
     if(event.dday === 0) todayCount++;
     if(event.dday === 1) tomorrowCount++;
 
     html += `
-
       <div class="event">
-
         <div class="event-title">
-          ${event.name}
-          (${event.relation})
+          ${event.eventName || event.eventType} - ${event.name}
         </div>
 
         <div class="event-date">
-          ${event.date}
-          / D-${event.dday}
+          ${event.date} / D-${event.dday} / ${event.calendarType}
         </div>
 
         <div class="event-message">
           ${event.message}
         </div>
 
+        ${event.gift ? `<div class="help">선물취향: ${event.gift}</div>` : ""}
+        ${event.warning ? `<div class="help">주의사항: ${event.warning}</div>` : ""}
+
         <div class="event-buttons">
-
-          <button
-            class="small-btn call-btn"
-            onclick="callPhone('${event.phone}')">
-
-            전화하기
-
-          </button>
-
-          <button
-            class="small-btn copy-btn"
-            onclick="copyMessage(\`${event.message}\`)">
-
-            문구복사
-
-          </button>
-
+          <button class="green" onclick="callPhone('${event.phone}')">전화</button>
+          <button class="purple" onclick="copyMessage(\`${event.message}\`)">문구복사</button>
         </div>
-
       </div>
-
     `;
   });
 
   list.innerHTML = html;
 
-  document.getElementById("todayBadge")
-    .innerHTML = `오늘<br>${todayCount}건`;
-
-  document.getElementById("tomorrowBadge")
-    .innerHTML = `내일<br>${tomorrowCount}건`;
-
-  document.getElementById("weekBadge")
-    .innerHTML = `7일 이내<br>${data.count}건`;
+  document.getElementById("todayBadge").innerHTML = `오늘<br>${todayCount}건`;
+  document.getElementById("tomorrowBadge").innerHTML = `내일<br>${tomorrowCount}건`;
+  document.getElementById("weekBadge").innerHTML = `7일 이내<br>${data.count}건`;
 }
 
-/************************************************
- * 전화걸기
- ************************************************/
 function callPhone(phone){
-
   location.href = "tel:" + phone;
 }
 
-/************************************************
- * 문구복사
- ************************************************/
 function copyMessage(msg){
-
   navigator.clipboard.writeText(msg);
-
   alert("문구 복사 완료");
 }
 
+loadPeople();
 loadEvents();
-
 </script>
 
 </body>
