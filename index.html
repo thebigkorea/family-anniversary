@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>가족지인 기념일 관리</title>
+
+<style>
+body{
+  margin:0;
+  padding:20px;
+  font-family:'Malgun Gothic',sans-serif;
+  background:#f5f6fa;
+  color:#222;
+}
+
+h1{
+  margin-top:0;
+  font-size:28px;
+}
+
+.card{
+  background:#fff;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:18px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.badges{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.badge{
+  background:#4b7bec;
+  color:#fff;
+  padding:12px 18px;
+  border-radius:30px;
+  font-weight:bold;
+  font-size:15px;
+}
+
+input,select,textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  margin-top:8px;
+  margin-bottom:14px;
+  box-sizing:border-box;
+  font-size:15px;
+}
+
+button{
+  border:none;
+  background:#4b7bec;
+  color:#fff;
+  padding:14px;
+  border-radius:12px;
+  width:100%;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(0.98);
+}
+
+.event{
+  border-bottom:1px solid #eee;
+  padding:15px 0;
+}
+
+.event:last-child{
+  border-bottom:none;
+}
+
+.event-title{
+  font-size:18px;
+  font-weight:bold;
+}
+
+.event-date{
+  color:#666;
+  margin-top:5px;
+}
+
+.msg{
+  background:#f1f3f6;
+  padding:12px;
+  border-radius:10px;
+  margin-top:10px;
+  line-height:1.5;
+}
+
+.action-buttons{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.action-buttons button{
+  flex:1;
+  padding:10px;
+  font-size:14px;
+}
+
+.small{
+  background:#20bf6b;
+}
+
+.copy{
+  background:#8854d0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>가족·지인 기념일 관리</h1>
+
+<div class="badges">
+  <div class="badge" id="todayBadge">오늘 0건</div>
+  <div class="badge" id="tomorrowBadge">내일 0건</div>
+  <div class="badge" id="weekBadge">7일 이내 0건</div>
+</div>
+
+<div class="card">
+
+<h2>인물 등록</h2>
+
+<input type="text" id="name" placeholder="이름">
+
+<input type="text" id="relation" placeholder="관계 (어머니 / 친구 / 친척 등)">
+
+<input type="tel" id="phone" placeholder="휴대폰번호">
+
+<input type="text" id="address" placeholder="주소">
+
+<select id="birthType">
+  <option value="양력">양력</option>
+  <option value="음력">음력</option>
+</select>
+
+<input type="number" id="birthMonth" placeholder="생일 월">
+
+<input type="number" id="birthDay" placeholder="생일 일">
+
+<select id="leapMonth">
+  <option value="N">윤달 아님</option>
+  <option value="Y">윤달</option>
+</select>
+
+<input type="text" id="eventType" placeholder="기념일 종류 (생일, 결혼기념일 등)">
+
+<input type="text" id="eventName" placeholder="기념일명">
+
+<textarea id="memo" placeholder="메모"></textarea>
+
+<input type="text" id="gift" placeholder="선물 취향">
+
+<input type="text" id="warning" placeholder="주의사항">
+
+<button onclick="savePerson()">저장하기</button>
+
+</div>
+
+<div class="card">
+
+<h2>다가오는 기념일</h2>
+
+<div id="eventList">
+불러오는 중...
+</div>
+
+</div>
+
+<script>
+
+const API_URL =
+"https://script.google.com/macros/s/AKfycbwLF5bl4M9Gwdcfc7ys63tj9_WG5VczrVHu4Ztfjo4Vf5dda-NK7FctQ3P0qTY2X_Q8/exec";
+
+/************************************************
+ * 저장
+ ************************************************/
+async function savePerson(){
+
+  const params = new URLSearchParams();
+
+  params.append("action","savePerson");
+
+  params.append("name",
+    document.getElementById("name").value);
+
+  params.append("relation",
+    document.getElementById("relation").value);
+
+  params.append("phone",
+    document.getElementById("phone").value);
+
+  params.append("address",
+    document.getElementById("address").value);
+
+  params.append("birthType",
+    document.getElementById("birthType").value);
+
+  params.append("birthMonth",
+    document.getElementById("birthMonth").value);
+
+  params.append("birthDay",
+    document.getElementById("birthDay").value);
+
+  params.append("leapMonth",
+    document.getElementById("leapMonth").value);
+
+  params.append("eventType",
+    document.getElementById("eventType").value);
+
+  params.append("eventName",
+    document.getElementById("eventName").value);
+
+  params.append("memo",
+    document.getElementById("memo").value);
+
+  params.append("gift",
+    document.getElementById("gift").value);
+
+  params.append("warning",
+    document.getElementById("warning").value);
+
+  const res = await fetch(API_URL + "?" + params.toString());
+
+  const data = await res.json();
+
+  alert(data.message);
+
+  loadEvents();
+}
+
+/************************************************
+ * 기념일 불러오기
+ ************************************************/
+async function loadEvents(){
+
+  const res = await fetch(
+    API_URL + "?action=getUpcomingEvents"
+  );
+
+  const data = await res.json();
+
+  const list = document.getElementById("eventList");
+
+  if(!data.events || data.events.length === 0){
+
+    list.innerHTML = "예정된 기념일이 없습니다.";
+
+    return;
+  }
+
+  let todayCount = 0;
+  let tomorrowCount = 0;
+
+  let html = "";
+
+  data.events.forEach(event=>{
+
+    if(event.dday === 0) todayCount++;
+    if(event.dday === 1) tomorrowCount++;
+
+    html += `
+      <div class="event">
+
+        <div class="event-title">
+          ${event.name}
+          (${event.relation})
+        </div>
+
+        <div class="event-date">
+          ${event.date}
+          / D-${event.dday}
+        </div>
+
+        <div class="msg">
+          ${event.message}
+        </div>
+
+        <div class="action-buttons">
+
+          <button class="small"
+            onclick="callPhone('${event.phone}')">
+            전화
+          </button>
+
+          <button class="copy"
+            onclick="copyMessage(\`${event.message}\`)">
+            문구복사
+          </button>
+
+        </div>
+
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+
+  document.getElementById("todayBadge")
+    .innerText = `오늘 ${todayCount}건`;
+
+  document.getElementById("tomorrowBadge")
+    .innerText = `내일 ${tomorrowCount}건`;
+
+  document.getElementById("weekBadge")
+    .innerText = `7일 이내 ${data.count}건`;
+}
+
+/************************************************
+ * 전화걸기
+ ************************************************/
+function callPhone(phone){
+
+  location.href = "tel:" + phone;
+}
+
+/************************************************
+ * 문구 복사
+ ************************************************/
+function copyMessage(msg){
+
+  navigator.clipboard.writeText(msg);
+
+  alert("문구 복사 완료");
+}
+
+loadEvents();
+
+</script>
+
+</body>
+</html>
