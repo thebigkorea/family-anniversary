@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
 <title>가족·지인 기념일 관리</title>
 
 <style>
@@ -173,6 +172,17 @@ button:active{ transform:scale(0.98); }
   margin-top:8px;
 }
 
+.repeat-badge{
+  display:inline-block;
+  margin-top:8px;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:bold;
+  background:#eef1f5;
+  color:#555;
+}
+
 @media(max-width:600px){
   body{ padding:14px; }
   h1{ font-size:25px; }
@@ -256,7 +266,7 @@ button:active{ transform:scale(0.98); }
     <input type="hidden" id="annivPerson">
 
     <div class="help">
-      예: 성다미, 부인, 어머니처럼 입력하면 등록된 사람을 검색할 수 있습니다.
+      예: 어머니, 친구, 이름 일부를 입력해서 선택하세요.
     </div>
 
     <label>행사구분</label>
@@ -290,6 +300,12 @@ button:active{ transform:scale(0.98); }
 
     <label>알림일수</label>
     <input type="number" id="alertDays" value="7">
+
+    <label>반복구분</label>
+    <select id="repeatType">
+      <option value="매년">매년 반복</option>
+      <option value="한번">한 번만</option>
+    </select>
 
     <label>메모</label>
     <textarea id="annivMemo"></textarea>
@@ -394,6 +410,7 @@ async function saveAnniversary(){
   params.append("day", document.getElementById("eventDay").value);
   params.append("leapMonth", document.getElementById("leapMonth").value);
   params.append("alertDays", document.getElementById("alertDays").value);
+  params.append("repeatType", document.getElementById("repeatType").value);
   params.append("memo", document.getElementById("annivMemo").value);
 
   const res = await fetch(API_URL + "?" + params.toString());
@@ -411,6 +428,7 @@ async function saveAnniversary(){
   document.getElementById("alertDays").value = "7";
   document.getElementById("calendarType").value = "양력";
   document.getElementById("leapMonth").value = "N";
+  document.getElementById("repeatType").value = "매년";
 
   loadEvents();
 }
@@ -447,6 +465,10 @@ async function loadEvents(){
         <div class="event-date">
           ${event.date} / D-${event.dday} / ${event.calendarType}
         </div>
+
+        <span class="repeat-badge">
+          ${event.repeatType === "한번" ? "한 번만" : "매년 반복"}
+        </span>
 
         <div class="event-message">
           ${event.message}
