@@ -4,76 +4,156 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>가족지인 기념일 관리</title>
+<title>가족·지인 기념일 관리</title>
 
 <style>
+
+*{
+  box-sizing:border-box;
+}
+
 body{
   margin:0;
   padding:20px;
+  background:#f3f5f9;
   font-family:'Malgun Gothic',sans-serif;
-  background:#f5f6fa;
   color:#222;
+}
+
+/* PC에서 너무 넓어지는 것 방지 */
+.app-wrap{
+  width:100%;
+  max-width:520px;
+  margin:0 auto;
 }
 
 h1{
   margin-top:0;
-  font-size:28px;
+  margin-bottom:20px;
+  font-size:32px;
+  font-weight:700;
 }
 
+/* 카드 */
 .card{
   background:#fff;
-  border-radius:18px;
-  padding:18px;
-  margin-bottom:18px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  border-radius:24px;
+  padding:22px;
+  margin-bottom:22px;
+  box-shadow:0 4px 18px rgba(0,0,0,0.08);
 }
 
+/* 배지 */
 .badges{
   display:flex;
-  gap:10px;
-  margin-bottom:20px;
-  flex-wrap:wrap;
+  gap:12px;
+  margin-bottom:22px;
 }
 
 .badge{
-  background:#4b7bec;
-  color:#fff;
-  padding:12px 18px;
-  border-radius:30px;
+  flex:1;
+  border-radius:20px;
+  padding:18px 10px;
+  text-align:center;
   font-weight:bold;
-  font-size:15px;
+  font-size:18px;
+  line-height:1.5;
 }
 
-input,select,textarea{
+.badge.today{
+  background:#fff1f1;
+  color:#ff3b30;
+}
+
+.badge.tomorrow{
+  background:#fff4ea;
+  color:#ff7a00;
+}
+
+.badge.week{
+  background:#edf4ff;
+  color:#1d74ff;
+}
+
+/* 입력 */
+.input-group{
+  margin-bottom:16px;
+}
+
+label{
+  display:block;
+  font-size:15px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+input,
+select,
+textarea{
   width:100%;
-  padding:12px;
   border:1px solid #ddd;
-  border-radius:10px;
-  margin-top:8px;
-  margin-bottom:14px;
-  box-sizing:border-box;
-  font-size:15px;
+  border-radius:14px;
+  padding:15px;
+  font-size:16px;
+  background:#fff;
 }
 
+textarea{
+  resize:none;
+  height:90px;
+}
+
+/* 2칸 */
+.row{
+  display:flex;
+  gap:12px;
+}
+
+.row .col{
+  flex:1;
+}
+
+/* 버튼 */
 button{
-  border:none;
-  background:#4b7bec;
-  color:#fff;
-  padding:14px;
-  border-radius:12px;
   width:100%;
-  font-size:16px;
+  border:none;
+  border-radius:16px;
+  padding:16px;
+  font-size:17px;
   font-weight:bold;
   cursor:pointer;
+  transition:0.15s;
 }
 
 button:active{
   transform:scale(0.98);
 }
 
+.primary-btn{
+  background:#2563ff;
+  color:#fff;
+}
+
+.small-btn{
+  flex:1;
+  padding:12px;
+  font-size:14px;
+}
+
+.call-btn{
+  background:#22c55e;
+  color:#fff;
+}
+
+.copy-btn{
+  background:#8b5cf6;
+  color:#fff;
+}
+
+/* 이벤트 */
 .event{
   border-bottom:1px solid #eee;
-  padding:15px 0;
+  padding:18px 0;
 }
 
 .event:last-child{
@@ -86,96 +166,186 @@ button:active{
 }
 
 .event-date{
+  margin-top:6px;
   color:#666;
-  margin-top:5px;
-}
-
-.msg{
-  background:#f1f3f6;
-  padding:12px;
-  border-radius:10px;
-  margin-top:10px;
-  line-height:1.5;
-}
-
-.action-buttons{
-  display:flex;
-  gap:8px;
-  margin-top:10px;
-}
-
-.action-buttons button{
-  flex:1;
-  padding:10px;
   font-size:14px;
 }
 
-.small{
-  background:#20bf6b;
+.event-message{
+  margin-top:12px;
+  background:#f6f7fb;
+  border-radius:14px;
+  padding:14px;
+  line-height:1.6;
+  font-size:15px;
 }
 
-.copy{
-  background:#8854d0;
+.event-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
 }
+
+/* 모바일 */
+@media(max-width:600px){
+
+  body{
+    padding:14px;
+  }
+
+  h1{
+    font-size:26px;
+  }
+
+  .card{
+    padding:18px;
+    border-radius:20px;
+  }
+
+  .badge{
+    font-size:16px;
+    padding:14px 6px;
+  }
+
+}
+
 </style>
 </head>
 
 <body>
 
+<div class="app-wrap">
+
 <h1>가족·지인 기념일 관리</h1>
 
+<!-- 배지 -->
 <div class="badges">
-  <div class="badge" id="todayBadge">오늘 0건</div>
-  <div class="badge" id="tomorrowBadge">내일 0건</div>
-  <div class="badge" id="weekBadge">7일 이내 0건</div>
+
+  <div class="badge today" id="todayBadge">
+    오늘<br>0건
+  </div>
+
+  <div class="badge tomorrow" id="tomorrowBadge">
+    내일<br>0건
+  </div>
+
+  <div class="badge week" id="weekBadge">
+    7일 이내<br>0건
+  </div>
+
 </div>
 
+<!-- 입력 -->
 <div class="card">
 
 <h2>인물 등록</h2>
 
-<input type="text" id="name" placeholder="이름">
+<div class="input-group">
+<label>이름</label>
+<input type="text" id="name">
+</div>
 
-<input type="text" id="relation" placeholder="관계 (어머니 / 친구 / 친척 등)">
+<div class="input-group">
+<label>관계</label>
+<input type="text" id="relation"
+placeholder="어머니 / 친구 / 친척 등">
+</div>
 
-<input type="tel" id="phone" placeholder="휴대폰번호">
+<div class="input-group">
+<label>휴대폰번호</label>
+<input type="tel" id="phone">
+</div>
 
-<input type="text" id="address" placeholder="주소">
+<div class="input-group">
+<label>주소</label>
+<input type="text" id="address">
+</div>
+
+<div class="input-group">
+<label>달력 종류</label>
 
 <select id="birthType">
   <option value="양력">양력</option>
   <option value="음력">음력</option>
 </select>
 
-<input type="number" id="birthMonth" placeholder="생일 월">
+</div>
 
-<input type="number" id="birthDay" placeholder="생일 일">
+<div class="row">
+
+  <div class="col">
+    <div class="input-group">
+      <label>생일 월</label>
+      <input type="number" id="birthMonth">
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="input-group">
+      <label>생일 일</label>
+      <input type="number" id="birthDay">
+    </div>
+  </div>
+
+</div>
+
+<div class="input-group">
+
+<label>윤달 여부</label>
 
 <select id="leapMonth">
   <option value="N">윤달 아님</option>
   <option value="Y">윤달</option>
 </select>
 
-<input type="text" id="eventType" placeholder="기념일 종류 (생일, 결혼기념일 등)">
+</div>
 
-<input type="text" id="eventName" placeholder="기념일명">
+<div class="input-group">
+<label>기념일 종류</label>
+<input type="text"
+id="eventType"
+placeholder="생일 / 결혼기념일">
+</div>
 
-<textarea id="memo" placeholder="메모"></textarea>
+<div class="input-group">
+<label>기념일명</label>
+<input type="text"
+id="eventName"
+placeholder="예: 어머니 생신">
+</div>
 
-<input type="text" id="gift" placeholder="선물 취향">
+<div class="input-group">
+<label>메모</label>
+<textarea id="memo"></textarea>
+</div>
 
-<input type="text" id="warning" placeholder="주의사항">
+<div class="input-group">
+<label>선물 취향</label>
+<input type="text" id="gift">
+</div>
 
-<button onclick="savePerson()">저장하기</button>
+<div class="input-group">
+<label>주의사항</label>
+<input type="text" id="warning">
+</div>
+
+<button
+class="primary-btn"
+onclick="savePerson()">
+저장하기
+</button>
 
 </div>
 
+<!-- 다가오는 기념일 -->
 <div class="card">
 
 <h2>다가오는 기념일</h2>
 
 <div id="eventList">
 불러오는 중...
+</div>
+
 </div>
 
 </div>
@@ -233,7 +403,8 @@ async function savePerson(){
   params.append("warning",
     document.getElementById("warning").value);
 
-  const res = await fetch(API_URL + "?" + params.toString());
+  const res =
+    await fetch(API_URL + "?" + params.toString());
 
   const data = await res.json();
 
@@ -243,7 +414,7 @@ async function savePerson(){
 }
 
 /************************************************
- * 기념일 불러오기
+ * 기념일 조회
  ************************************************/
 async function loadEvents(){
 
@@ -253,11 +424,13 @@ async function loadEvents(){
 
   const data = await res.json();
 
-  const list = document.getElementById("eventList");
+  const list =
+    document.getElementById("eventList");
 
   if(!data.events || data.events.length === 0){
 
-    list.innerHTML = "예정된 기념일이 없습니다.";
+    list.innerHTML =
+      "예정된 기념일이 없습니다.";
 
     return;
   }
@@ -273,6 +446,7 @@ async function loadEvents(){
     if(event.dday === 1) tomorrowCount++;
 
     html += `
+
       <div class="event">
 
         <div class="event-title">
@@ -285,38 +459,45 @@ async function loadEvents(){
           / D-${event.dday}
         </div>
 
-        <div class="msg">
+        <div class="event-message">
           ${event.message}
         </div>
 
-        <div class="action-buttons">
+        <div class="event-buttons">
 
-          <button class="small"
+          <button
+            class="small-btn call-btn"
             onclick="callPhone('${event.phone}')">
-            전화
+
+            전화하기
+
           </button>
 
-          <button class="copy"
+          <button
+            class="small-btn copy-btn"
             onclick="copyMessage(\`${event.message}\`)">
+
             문구복사
+
           </button>
 
         </div>
 
       </div>
+
     `;
   });
 
   list.innerHTML = html;
 
   document.getElementById("todayBadge")
-    .innerText = `오늘 ${todayCount}건`;
+    .innerHTML = `오늘<br>${todayCount}건`;
 
   document.getElementById("tomorrowBadge")
-    .innerText = `내일 ${tomorrowCount}건`;
+    .innerHTML = `내일<br>${tomorrowCount}건`;
 
   document.getElementById("weekBadge")
-    .innerText = `7일 이내 ${data.count}건`;
+    .innerHTML = `7일 이내<br>${data.count}건`;
 }
 
 /************************************************
@@ -328,7 +509,7 @@ function callPhone(phone){
 }
 
 /************************************************
- * 문구 복사
+ * 문구복사
  ************************************************/
 function copyMessage(msg){
 
