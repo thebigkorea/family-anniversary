@@ -236,6 +236,19 @@ button:active{ transform:scale(0.98); }
   font-weight:bold;
 }
 
+.month-title select{
+  width:auto;
+  min-width:92px;
+  display:inline-block;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid #d7dce5;
+  background:#fff;
+  font-size:16px;
+  font-weight:bold;
+  margin:0 3px;
+}
+
 .calendar{
   display:grid;
   grid-template-columns:repeat(7,1fr);
@@ -364,7 +377,12 @@ button:active{ transform:scale(0.98); }
 
       <div class="month-control">
         <button onclick="moveMonth(-1)">◀</button>
-        <div class="month-title" id="monthTitle"></div>
+
+        <div class="month-title">
+          <select id="calendarYear" onchange="selectMonthCalendar()"></select>
+          <select id="calendarMonth" onchange="selectMonthCalendar()"></select>
+        </div>
+
         <button onclick="moveMonth(1)">▶</button>
       </div>
 
@@ -503,6 +521,48 @@ let peopleCache = [];
 let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth() + 1;
 let currentMonthEvents = [];
+
+function initCalendarSelect(){
+  const yearSelect = document.getElementById("calendarYear");
+  const monthSelect = document.getElementById("calendarMonth");
+
+  if(!yearSelect || !monthSelect) return;
+
+  yearSelect.innerHTML = "";
+  monthSelect.innerHTML = "";
+
+  for(let y = 2020; y <= 2060; y++){
+    const option = document.createElement("option");
+    option.value = y;
+    option.textContent = y + "년";
+    if(y === currentYear) option.selected = true;
+    yearSelect.appendChild(option);
+  }
+
+  for(let m = 1; m <= 12; m++){
+    const option = document.createElement("option");
+    option.value = m;
+    option.textContent = m + "월";
+    if(m === currentMonth) option.selected = true;
+    monthSelect.appendChild(option);
+  }
+}
+
+function syncCalendarSelect(){
+  const yearSelect = document.getElementById("calendarYear");
+  const monthSelect = document.getElementById("calendarMonth");
+
+  if(!yearSelect || !monthSelect) return;
+
+  yearSelect.value = currentYear;
+  monthSelect.value = currentMonth;
+}
+
+function selectMonthCalendar(){
+  currentYear = Number(document.getElementById("calendarYear").value);
+  currentMonth = Number(document.getElementById("calendarMonth").value);
+  loadMonthlyCalendar();
+}
 
 function showSection(id, btn){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
@@ -677,10 +737,9 @@ async function loadEvents(){
 }
 
 async function loadMonthlyCalendar(){
-  const title = document.getElementById("monthTitle");
   const grid = document.getElementById("calendarGrid");
 
-  title.innerText = `${currentYear}년 ${currentMonth}월`;
+  syncCalendarSelect();
   grid.innerHTML = "불러오는 중...";
 
   try{
@@ -848,6 +907,7 @@ function copyMessage(msg){
   alert("문구 복사 완료");
 }
 
+initCalendarSelect();
 loadPeople();
 loadEvents();
 loadMonthlyCalendar();
