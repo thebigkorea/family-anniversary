@@ -295,6 +295,27 @@ button:active{ transform:scale(0.98); }
   line-height:1.3;
 }
 
+.cal-event.appointment{
+  background:#f3e8ff;
+  color:#7e22ce;
+}
+
+.type-badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:bold;
+  background:#edf4ff;
+  color:#1d4ed8;
+  margin-top:8px;
+}
+
+.type-badge.appointment{
+  background:#f3e8ff;
+  color:#7e22ce;
+}
+
 .lunar-text{
   display:block;
   margin-top:2px;
@@ -362,6 +383,7 @@ button:active{ transform:scale(0.98); }
     <button class="tab" onclick="showSection('searchSec', this)">사람조회</button>
     <button class="tab" onclick="showSection('person', this)">사람등록</button>
     <button class="tab" onclick="showSection('anniv', this)">기념일추가</button>
+    <button class="tab" onclick="showSection('appointmentSec', this)">약속추가</button>
   </div>
 
   <div id="home" class="section active">
@@ -511,6 +533,39 @@ button:active{ transform:scale(0.98); }
     </div>
   </div>
 
+  <div id="appointmentSec" class="section">
+    <div class="card">
+      <h2>약속 추가</h2>
+
+      <label>약속명</label>
+      <input type="text" id="appointmentTitle" placeholder="예: 점심약속 / 병원예약 / 거래처 미팅">
+
+      <label>상대방 이름</label>
+      <input type="text" id="appointmentPerson" placeholder="사람등록 없이 직접 입력 가능">
+
+      <label>날짜</label>
+      <input type="date" id="appointmentDate">
+
+      <label>시간</label>
+      <input type="time" id="appointmentTime">
+
+      <label>장소</label>
+      <input type="text" id="appointmentLocation" placeholder="예: 잠실 / 사무실 / 병원">
+
+      <label>메모</label>
+      <textarea id="appointmentMemo"></textarea>
+
+      <label>알림일수</label>
+      <input type="number" id="appointmentAlertDays" value="7">
+
+      <button class="primary" onclick="saveAppointment()">약속 저장</button>
+
+      <div class="help">
+        사람등록이 되어 있지 않아도 약속을 바로 입력할 수 있습니다.
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -574,6 +629,7 @@ function showSection(id, btn){
   if(id === "anniv") loadPeople();
   if(id === "home") loadEvents();
   if(id === "calendarSec") loadMonthlyCalendar();
+  if(id === "appointmentSec") setDefaultAppointmentDate();
 }
 
 async function savePerson(){
@@ -677,6 +733,63 @@ async function saveAnniversary(){
   loadMonthlyCalendar();
 }
 
+
+function setDefaultAppointmentDate(){
+  const dateInput = document.getElementById("appointmentDate");
+  if(dateInput && !dateInput.value){
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
+}
+
+async function saveAppointment(){
+  const title = document.getElementById("appointmentTitle").value.trim();
+  const personName = document.getElementById("appointmentPerson").value.trim();
+  const date = document.getElementById("appointmentDate").value;
+
+  if(!title){
+    alert("약속명을 입력하세요.");
+    return;
+  }
+
+  if(!date){
+    alert("약속 날짜를 선택하세요.");
+    return;
+  }
+
+  const params = new URLSearchParams();
+
+  params.append("action","saveAppointment");
+  params.append("title", title);
+  params.append("personName", personName);
+  params.append("date", date);
+  params.append("time", document.getElementById("appointmentTime").value);
+  params.append("location", document.getElementById("appointmentLocation").value);
+  params.append("memo", document.getElementById("appointmentMemo").value);
+  params.append("alertDays", document.getElementById("appointmentAlertDays").value);
+
+  const res = await fetch(API_URL + "?" + params.toString());
+  const data = await res.json();
+
+  alert(data.message || "약속 저장 완료");
+
+  document.getElementById("appointmentTitle").value = "";
+  document.getElementById("appointmentPerson").value = "";
+  document.getElementById("appointmentDate").value = "";
+  document.getElementById("appointmentTime").value = "";
+  document.getElementById("appointmentLocation").value = "";
+  document.getElementById("appointmentMemo").value = "";
+  document.getElementById("appointmentAlertDays").value = "7";
+
+  setDefaultAppointmentDate();
+  loadEvents();
+  loadMonthlyCalendar();
+}
+
+
 async function loadEvents(){
   const res = await fetch(API_URL + "?action=getUpcomingEvents");
   const data = await res.json();
@@ -703,16 +816,20 @@ async function loadEvents(){
     html += `
       <div class="event">
         <div class="event-title">
-          ${event.eventName || event.eventType} - ${event.name}
+          ${event.title || event.eventName || event.eventType} ${event.itemType === "appointment" ? "" : "- " + event.name}
         </div>
 
         <div class="event-date">
-          ${event.displayDateText || event.date} / D-${event.dday} / ${event.calendarType}
+          ${event.displayDateText || event.date} / D-${event.dday} / ${event.itemType === "appointment" ? "약속" : event.calendarType}
         </div>
 
-        <span class="repeat-badge">
-          ${event.repeatType === "한번" ? "한 번만" : "매년 반복"}
-        </span>
+        ${event.itemType === "appointment" 
+          ? `<span class="type-badge appointment">약속</span>` 
+          : `<span class="repeat-badge">${event.repeatType === "한번" ? "한 번만" : "매년 반복"}</span>`}
+
+        ${event.personName ? `<div class="help">상대방: ${event.personName}</div>` : ""}
+        ${event.time ? `<div class="help">시간: ${event.time}</div>` : ""}
+        ${event.location ? `<div class="help">장소: ${event.location}</div>` : ""}
 
         <div class="event-message">
           ${event.message}
@@ -782,8 +899,8 @@ function renderCalendar(){
 
     dayEvents.slice(0,2).forEach(ev=>{
       html += `
-        <div class="cal-event">
-          ${ev.eventName || ev.eventType}
+        <div class="cal-event ${ev.itemType === "appointment" ? "appointment" : ""}">
+          ${ev.title || ev.eventName || ev.eventType}
           <span class="lunar-text">${ev.displayDateText || ev.date}</span>
         </div>
       `;
@@ -813,10 +930,18 @@ function showDayEvents(day){
   list.forEach(ev=>{
     html += `
       <div class="event">
-        <div class="event-title">${ev.eventName || ev.eventType}</div>
-        <div class="event-date">${ev.name || ""} (${ev.relation || ""})</div>
+        <div class="event-title">${ev.title || ev.eventName || ev.eventType}</div>
+        <span class="type-badge ${ev.itemType === "appointment" ? "appointment" : ""}">
+          ${ev.itemType === "appointment" ? "약속" : "기념일"}
+        </span>
+        <div class="event-date">
+          ${ev.itemType === "appointment" 
+            ? `${ev.personName || ""} ${ev.time ? "· " + ev.time : ""}` 
+            : `${ev.name || ""} (${ev.relation || ""})`}
+        </div>
         <div class="event-date">${ev.displayDateText || ev.date}</div>
-        <div class="event-message">${ev.message || ""}</div>
+        ${ev.location ? `<div class="event-date">장소: ${ev.location}</div>` : ""}
+        <div class="event-message">${ev.message || ev.memo || ""}</div>
       </div>
     `;
   });
