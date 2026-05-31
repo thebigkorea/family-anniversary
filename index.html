@@ -358,6 +358,23 @@ button:active{ transform:scale(0.98); }
   .day-cell{ min-height:76px; padding:6px; }
   .cal-event{ font-size:10px; }
 }
+.day-name.sunday,
+.day-cell.sunday .day-num{
+  color:#dc2626;
+}
+
+.day-name.saturday,
+.day-cell.saturday .day-num{
+  color:#2563eb;
+}
+
+.day-cell.sunday{
+  background:#fff1f1;
+}
+
+.day-cell.saturday{
+  background:#edf4ff;
+}
 </style>
 </head>
 
@@ -878,8 +895,9 @@ function renderCalendar(){
 
   let html = "";
 
-  weekNames.forEach(w=>{
-    html += `<div class="day-name">${w}</div>`;
+  weekNames.forEach((w,i)=>{
+    const cls = i === 0 ? "sunday" : i === 6 ? "saturday" : "";
+    html += `<div class="day-name ${cls}">${w}</div>`;
   });
 
   const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
@@ -892,10 +910,16 @@ function renderCalendar(){
   for(let day=1; day<=lastDate; day++){
     const dayEvents = currentMonthEvents.filter(e => Number(e.day) === day);
 
-    html += `
-      <div class="day-cell" onclick="showDayEvents(${day})">
-        <div class="day-num">${day}</div>
-    `;
+    const week = new Date(currentYear, currentMonth - 1, day).getDay();
+    const dayClass =
+      week === 0 ? "sunday" :
+      week === 6 ? "saturday" :
+      "";
+
+html += `
+  <div class="day-cell ${dayClass}" onclick="showDayEvents(${day})">
+    <div class="day-num">${day}</div>
+`;
 
     dayEvents.slice(0,2).forEach(ev=>{
       html += `
@@ -927,21 +951,34 @@ function showDayEvents(day){
 
   let html = "";
 
-  list.forEach(ev=>{
+  list.forEach((ev,index)=>{
     html += `
       <div class="event">
         <div class="event-title">${ev.title || ev.eventName || ev.eventType}</div>
+
         <span class="type-badge ${ev.itemType === "appointment" ? "appointment" : ""}">
           ${ev.itemType === "appointment" ? "약속" : "기념일"}
         </span>
+
         <div class="event-date">
-          ${ev.itemType === "appointment" 
-            ? `${ev.personName || ""} ${ev.time ? "· " + ev.time : ""}` 
-            : `${ev.name || ""} (${ev.relation || ""})`}
+          ${
+            ev.itemType === "appointment"
+              ? `${ev.personName || ""} ${ev.time ? "· " + ev.time : ""}`
+              : `${ev.name || ""} (${ev.relation || ""})`
+          }
         </div>
+
         <div class="event-date">${ev.displayDateText || ev.date}</div>
+
         ${ev.location ? `<div class="event-date">장소: ${ev.location}</div>` : ""}
+
         <div class="event-message">${ev.message || ev.memo || ""}</div>
+
+        <div class="event-buttons">
+          <button class="green" onclick="editCalendarEvent(${index}, ${day})">수정</button>
+          <button class="purple" onclick="moveCalendarDate(${index}, ${day})">날짜이동</button>
+          <button class="gray" onclick="deleteCalendarEvent(${index}, ${day})">삭제</button>
+        </div>
       </div>
     `;
   });
@@ -949,74 +986,159 @@ function showDayEvents(day){
   box.innerHTML = html;
 }
 
-function moveMonth(diff){
-  currentMonth += diff;
+function getEventByIndex(index, day){
+  const list = currentMonthEvents.filter(e => Number(e.day) === day);
+  return list[index];
+}
 
-  if(currentMonth < 1){
-    currentMonth = 12;
-    currentYear--;
+async function editCalendarEvent(index, day){
+  const ev = getEventByIndex(index, day);
+  if(!ev) return;
+
+  if(ev.itemType === "appointment"){
+    const title = prompt("약속명", ev.title || "");
+    if(title === null) return;
+
+    const date = prompt("날짜 YYYY-MM-DD", ev.date || "");
+    if(date === null) return;
+
+    const time = prompt("시간", ev.time || "");
+    if(time === null) return;
+
+    const location = prompt("장소", ev.location || "");
+    if(location === null) return;
+
+    const memo = prompt("메모", ev.memo || "");
+    if(memo === null) return;
+
+    const params = new URLSearchParams();
+    params.append("action","updateAppointment");
+    params.append("appointmentId", ev.appointmentId);
+    params.append("title", title);
+    params.append("personName", ev.personName || "");
+    params.append("date", date);
+    params.append("time", time);
+    params.append("location", location);
+    params.append("memo", memo);
+    params.append("alertDays", ev.alertDays || 7);
+
+    const res = await fetch(API_URL + "?" + params.toString());
+    const data = await res.json();
+    alert(data.message || "수정 완료");
+
+  }else{
+    const eventType = prompt("행사구분", ev.eventType || "");
+    if(eventType === null) return;
+
+    const eventName = prompt("행사명", ev.eventName || "");
+    if(eventName === null) return;
+
+    const month = prompt("월", ev.originalMonth || currentMonth);
+    if(month === null) return;
+
+    const dayValue = prompt("일", ev.originalDay || ev.day);
+    if(dayValue === null) return;
+
+    const memo = prompt("메모", ev.memo || "");
+    if(memo === null) return;
+
+    const params = new URLSearchParams();
+    params.append("action","updateAnniversary");
+    params.append("eventId", ev.eventId);
+    params.append("eventType", eventType);
+    params.append("eventName", eventName);
+    params.append("calendarType", ev.calendarType || "양력");
+    params.append("month", month);
+    params.append("day", dayValue);
+    params.append("leapMonth", ev.leapMonth || "N");
+    params.append("alertDays", ev.alertDays || 7);
+    params.append("repeatType", ev.repeatType || "매년");
+    params.append("memo", memo);
+
+    const res = await fetch(API_URL + "?" + params.toString());
+    const data = await res.json();
+    alert(data.message || "수정 완료");
   }
 
-  if(currentMonth > 12){
-    currentMonth = 1;
-    currentYear++;
-  }
-
+  loadEvents();
   loadMonthlyCalendar();
 }
 
-async function searchPerson(){
-  const keyword = document.getElementById("searchKeyword").value.trim();
+async function moveCalendarDate(index, day){
+  const ev = getEventByIndex(index, day);
+  if(!ev) return;
 
-  if(!keyword){
-    alert("검색어를 입력하세요.");
-    return;
+  if(ev.itemType === "appointment"){
+    const newDate = prompt("이동할 날짜 YYYY-MM-DD", ev.date || "");
+    if(!newDate) return;
+
+    const params = new URLSearchParams();
+    params.append("action","updateAppointment");
+    params.append("appointmentId", ev.appointmentId);
+    params.append("title", ev.title || "");
+    params.append("personName", ev.personName || "");
+    params.append("date", newDate);
+    params.append("time", ev.time || "");
+    params.append("location", ev.location || "");
+    params.append("memo", ev.memo || "");
+    params.append("alertDays", ev.alertDays || 7);
+
+    const res = await fetch(API_URL + "?" + params.toString());
+    const data = await res.json();
+    alert(data.message || "날짜 이동 완료");
+
+  }else{
+    const month = prompt("이동할 월", ev.originalMonth || currentMonth);
+    if(month === null) return;
+
+    const dayValue = prompt("이동할 일", ev.originalDay || ev.day);
+    if(dayValue === null) return;
+
+    const params = new URLSearchParams();
+    params.append("action","updateAnniversary");
+    params.append("eventId", ev.eventId);
+    params.append("eventType", ev.eventType || "");
+    params.append("eventName", ev.eventName || "");
+    params.append("calendarType", ev.calendarType || "양력");
+    params.append("month", month);
+    params.append("day", dayValue);
+    params.append("leapMonth", ev.leapMonth || "N");
+    params.append("alertDays", ev.alertDays || 7);
+    params.append("repeatType", ev.repeatType || "매년");
+    params.append("memo", ev.memo || "");
+
+    const res = await fetch(API_URL + "?" + params.toString());
+    const data = await res.json();
+    alert(data.message || "날짜 이동 완료");
   }
 
-  const res = await fetch(
-    API_URL + `?action=searchPerson&keyword=${encodeURIComponent(keyword)}`
-  );
+  loadEvents();
+  loadMonthlyCalendar();
+}
+
+async function deleteCalendarEvent(index, day){
+  const ev = getEventByIndex(index, day);
+  if(!ev) return;
+
+  if(!confirm("삭제하시겠습니까?")) return;
+
+  const params = new URLSearchParams();
+
+  if(ev.itemType === "appointment"){
+    params.append("action","deleteAppointment");
+    params.append("appointmentId", ev.appointmentId);
+  }else{
+    params.append("action","deleteAnniversary");
+    params.append("eventId", ev.eventId);
+  }
+
+  const res = await fetch(API_URL + "?" + params.toString());
   const data = await res.json();
 
-  const box = document.getElementById("personSearchResult");
+  alert(data.message || "삭제 완료");
 
-  if(!data.people || data.people.length === 0){
-    box.innerHTML = "검색 결과가 없습니다.";
-    return;
-  }
-
-  let html = "";
-
-  data.people.forEach(person=>{
-    html += `
-      <div class="person-box">
-        <div class="person-name">${person.name}</div>
-        <div class="info-line">관계 : ${person.relation || "-"}</div>
-        <div class="info-line">전화번호 : ${person.phone || "-"}</div>
-        <div class="info-line">주소 : ${person.address || "-"}</div>
-        <div class="info-line">메모 : ${person.memo || "-"}</div>
-        <div class="info-line">선물취향 : ${person.gift || "-"}</div>
-        <div class="info-line">주의사항 : ${person.warning || "-"}</div>
-        <div class="small-title">등록된 기념일</div>
-    `;
-
-    if(!person.anniversaries || person.anniversaries.length === 0){
-      html += `<div class="help">등록된 기념일이 없습니다.</div>`;
-    } else {
-      person.anniversaries.forEach(ev=>{
-        html += `
-          <div class="event">
-            <div class="event-title">${ev.eventName || ev.eventType}</div>
-            <div class="event-date">${ev.displayDate || "-"}</div>
-          </div>
-        `;
-      });
-    }
-
-    html += `</div>`;
-  });
-
-  box.innerHTML = html;
+  loadEvents();
+  loadMonthlyCalendar();
 }
 
 function callPhone(phone){
