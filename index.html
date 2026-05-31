@@ -1154,6 +1154,24 @@ function copyMessage(msg){
   alert("문구 복사 완료");
 }
 
+function moveMonth(diff){
+
+  currentMonth += diff;
+
+  if(currentMonth < 1){
+    currentMonth = 12;
+    currentYear--;
+  }
+
+  if(currentMonth > 12){
+    currentMonth = 1;
+    currentYear++;
+  }
+
+  syncCalendarSelect();
+  loadMonthlyCalendar();
+}
+
 initCalendarSelect();
 loadPeople();
 loadEvents();
