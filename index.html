@@ -697,6 +697,72 @@ async function loadPeople(){
   });
 }
 
+
+function escapeHtmlValue(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+async function searchPerson(){
+  const input = document.getElementById("searchKeyword");
+  const resultBox = document.getElementById("personSearchResult");
+  const keyword = (input?.value || "").trim().toLowerCase();
+
+  if(!resultBox) return;
+
+  if(!keyword){
+    resultBox.innerHTML = "검색할 이름, 관계 또는 전화번호를 입력하세요.";
+    return;
+  }
+
+  try{
+    if(!peopleCache.length){
+      await loadPeople();
+    }
+
+    const normalizePhone = v => String(v || "").replace(/\D/g,"");
+    const keywordPhone = normalizePhone(keyword);
+
+    const matches = peopleCache.filter(p=>{
+      const name = String(p.name || "").toLowerCase();
+      const relation = String(p.relation || "").toLowerCase();
+      const phone = String(p.phone || "");
+      const phoneDigits = normalizePhone(phone);
+
+      return (
+        name.includes(keyword) ||
+        relation.includes(keyword) ||
+        phone.toLowerCase().includes(keyword) ||
+        (keywordPhone && phoneDigits.includes(keywordPhone))
+      );
+    });
+
+    if(!matches.length){
+      resultBox.innerHTML = `<div class="empty-box"><strong>${escapeHtmlValue(input.value.trim())}</strong> 검색 결과가 없습니다.</div>`;
+      return;
+    }
+
+    resultBox.innerHTML = matches.map(p=>`
+      <div class="person-box">
+        <div class="person-name">${escapeHtmlValue(p.name || "-")}</div>
+        <div class="info-line"><strong>관계</strong> ${escapeHtmlValue(p.relation || "-")}</div>
+        <div class="info-line"><strong>전화번호</strong> ${escapeHtmlValue(p.phone || "-")}</div>
+        <div class="info-line"><strong>주소</strong> ${escapeHtmlValue(p.address || "-")}</div>
+        <div class="info-line"><strong>메모</strong> ${escapeHtmlValue(p.memo || "-")}</div>
+        <div class="info-line"><strong>선물 취향</strong> ${escapeHtmlValue(p.gift || "-")}</div>
+        <div class="info-line"><strong>주의사항</strong> ${escapeHtmlValue(p.warning || "-")}</div>
+      </div>
+    `).join("");
+  }catch(error){
+    console.error("사람 조회 실패", error);
+    resultBox.innerHTML = "사람 정보를 불러오지 못했습니다. 잠시 후 다시 시도하세요.";
+  }
+}
+
 function selectPersonByInput(){
   const inputValue = document.getElementById("personSearch").value.trim();
   const hidden = document.getElementById("annivPerson");
@@ -1180,6 +1246,13 @@ initCalendarSelect();
 loadPeople();
 loadEvents();
 loadMonthlyCalendar();
+
+document.getElementById("searchKeyword")?.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    e.preventDefault();
+    searchPerson();
+  }
+});
 </script>
 
 </body>
