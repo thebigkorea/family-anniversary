@@ -952,7 +952,7 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
     <button class="tab" onclick="showSection('appointmentSec', this)">약속추가</button>
   </div>
 
-  <div id="home" class="section active">
+  <div id="home" class="section">
     <div class="card">
       <h2>다가오는 기념일</h2>
       <div id="eventList" class="empty-box">불러오는 중...</div>
@@ -968,7 +968,7 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
   <button type="button" onclick="showSection('appointmentSec',this)">약속추가</button>
 </div>
 
-<div id="calendarSec" class="section">
+<div id="calendarSec" class="section active">
     <div class="card">
       <h2>월간 캘린더</h2>
 
@@ -1261,10 +1261,11 @@ function selectMonthCalendar(){
 
 function showSection(id, btn){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab,.side-item,.mobile-main-nav button").forEach(t=>t.classList.remove("active"));
 
-  document.getElementById(id).classList.add("active");
-  btn.classList.add("active");
+  const section = document.getElementById(id);
+  if(section) section.classList.add("active");
+  if(btn) btn.classList.add("active");
 
   if(id === "anniv") loadPeople();
   if(id === "person") loadPeople();
@@ -1716,20 +1717,71 @@ async function loadMonthlyCalendar(){
   const grid = document.getElementById("calendarGrid");
 
   syncCalendarSelect();
-  grid.innerHTML = "불러오는 중...";
+  if(grid) grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;text-align:center;color:#7890aa">일정을 불러오는 중...</div>';
 
   try{
-    const res = await fetch(
-      API_URL + `?action=getMonthlyEvents&year=${currentYear}&month=${currentMonth}&_=${Date.now()}`,
-      {cache:"no-store"}
-    );
-    const data = await res.json();
-    currentMonthEvents = data.events || [];
-  }catch(e){
-    currentMonthEvents = [];
-  }
+    const url = API_URL
+      + `?action=getMonthlyEvents&year=${encodeURIComponent(currentYear)}`
+      + `&month=${encodeURIComponent(currentMonth)}`
+      + `&_=${Date.now()}`;
 
-  renderCalendar();
+    const res = await fetch(url, {
+      method:"GET",
+      cache:"no-store",
+      redirect:"follow"
+    });
+
+    if(!res.ok){
+      throw new Error("HTTP " + res.status);
+    }
+
+    const raw = await res.text();
+    let data;
+
+    try{
+      data = JSON.parse(raw);
+    }catch(parseError){
+      console.error("월간 일정 JSON 변환 실패:", raw);
+      throw new Error("서버 응답이 JSON 형식이 아닙니다.");
+    }
+
+    if(data && data.success === false){
+      throw new Error(data.message || "월간 일정 조회 실패");
+    }
+
+    currentMonthEvents = Array.isArray(data?.events) ? data.events : [];
+
+    console.log(
+      `[월간일정] ${currentYear}-${String(currentMonth).padStart(2,"0")} / ${currentMonthEvents.length}건`,
+      currentMonthEvents
+    );
+
+    renderCalendar();
+    if(typeof renderMonthAgenda === "function") renderMonthAgenda();
+
+  }catch(e){
+    console.error("월간 일정 조회 오류:", e);
+
+    currentMonthEvents = [];
+    renderCalendar();
+
+    if(grid){
+      const notice = document.createElement("div");
+      notice.style.cssText =
+        "grid-column:1/-1;margin:12px;padding:12px;border-radius:10px;" +
+        "background:#fff1f1;color:#c62828;font-size:12px;text-align:center;";
+      notice.innerHTML =
+        "등록 일정 조회에 실패했습니다.<br>" +
+        "<b>Apps Script 웹앱 배포와 API 주소를 확인해 주세요.</b>";
+      grid.appendChild(notice);
+    }
+
+    const agenda = document.getElementById("monthAgendaList");
+    if(agenda){
+      agenda.innerHTML =
+        '<div style="padding:20px 5px;color:#c62828;font-size:11px">일정 조회에 실패했습니다.</div>';
+    }
+  }
 }
 
 function renderCalendar(){
@@ -2094,8 +2146,14 @@ function renderMonthAgenda(){
   box.innerHTML=list.map(ev=>{const ap=ev.itemType==="appointment";const nm=ev.title||ev.eventName||ev.name||ev.eventType||"일정";return `<div class="agenda-row" onclick="showDayEvents(${Number(ev.day)})"><i class="agenda-dot ${ap?'appt':''}"></i><span class="agenda-date">${currentMonth}월 ${String(ev.day).padStart(2,'0')}일</span><span class="agenda-name">${escapeHtmlValue(nm)}</span><span class="agenda-kind">${ap?'약속':'기념일'}</span></div>`}).join("");
 }
 function showAllMonthAgenda(){const a=(currentMonthEvents||[])[0];if(a)showDayEvents(Number(a.day));}
-window.addEventListener("load",()=>setTimeout(()=>{showSection("calendarSec",document.querySelector(".tabs .tab:nth-child(2)"));renderMonthAgenda();},100));
-setInterval(renderMonthAgenda,1000);
+window.addEventListener("load",()=>{
+  setTimeout(()=>{
+    const calendarBtn =
+      document.querySelector(".desktop-sidebar .side-item:first-child") ||
+      document.querySelector(".mobile-main-nav button:first-child");
+    showSection("calendarSec", calendarBtn);
+  },100);
+});
 </script>
 </body>
 </html>
