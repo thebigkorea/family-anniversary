@@ -597,6 +597,44 @@ button:active{ transform:scale(0.98); }
 
 </div>
 
+
+<div id="personEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;padding:18px;overflow:auto;">
+  <div class="card" style="max-width:520px;margin:30px auto;">
+    <h2>사람 정보 수정</h2>
+    <input type="hidden" id="editPersonId">
+
+    <label>이름</label>
+    <input type="text" id="editPersonName">
+
+    <label>관계</label>
+    <input type="text" id="editPersonRelation">
+
+    <label>휴대폰번호</label>
+    <input type="tel" id="editPersonPhone">
+
+    <label>배우자</label>
+    <select id="editPersonSpouse" onchange="syncEditAddressFromSpouse()">
+      <option value="">배우자 없음 / 선택 안 함</option>
+    </select>
+    <div class="help">배우자를 선택하면 배우자의 등록 주소를 가져옵니다.</div>
+
+    <label>주소</label>
+    <input type="text" id="editPersonAddress">
+
+    <label>메모</label>
+    <textarea id="editPersonMemo"></textarea>
+
+    <label>선물 취향</label>
+    <input type="text" id="editPersonGift">
+
+    <label>주의사항</label>
+    <input type="text" id="editPersonWarning">
+
+    <button class="primary" onclick="savePersonEdit()">수정 저장</button>
+    <button class="gray" style="margin-top:8px" onclick="closePersonEdit()">취소</button>
+  </div>
+</div>
+
 <script>
 const API_URL =
 "https://script.google.com/macros/s/AKfycbwLF5bl4M9Gwdcfc7ys63tj9_WG5VczrVHu4Ztfjo4Vf5dda-NK7FctQ3P0qTY2X_Q8/exec";
@@ -793,11 +831,99 @@ async function searchPerson(){
         <div class="info-line"><strong>메모</strong> ${escapeHtmlValue(p.memo || "-")}</div>
         <div class="info-line"><strong>선물 취향</strong> ${escapeHtmlValue(p.gift || "-")}</div>
         <div class="info-line"><strong>주의사항</strong> ${escapeHtmlValue(p.warning || "-")}</div>
+        <button class="primary" style="margin-top:12px"
+          onclick="openPersonEdit('${p.id}')">정보 수정 · 배우자 연결</button>
       </div>
     `).join("");
   }catch(error){
     console.error("사람 조회 실패", error);
     resultBox.innerHTML = "사람 정보를 불러오지 못했습니다. 잠시 후 다시 시도하세요.";
+  }
+}
+
+
+function openPersonEdit(personId){
+  const p = peopleCache.find(x => String(x.id) === String(personId));
+  if(!p){
+    alert("사람 정보를 찾지 못했습니다.");
+    return;
+  }
+
+  document.getElementById("editPersonId").value = p.id || "";
+  document.getElementById("editPersonName").value = p.name || "";
+  document.getElementById("editPersonRelation").value = p.relation || "";
+  document.getElementById("editPersonPhone").value = p.phone || "";
+  document.getElementById("editPersonAddress").value = p.address || "";
+  document.getElementById("editPersonMemo").value = p.memo || "";
+  document.getElementById("editPersonGift").value = p.gift || "";
+  document.getElementById("editPersonWarning").value = p.warning || "";
+
+  const sel = document.getElementById("editPersonSpouse");
+  sel.innerHTML = '<option value="">배우자 없음 / 선택 안 함</option>';
+
+  peopleCache
+    .filter(x => String(x.id) !== String(p.id))
+    .sort((a,b) => String(a.name||"").localeCompare(String(b.name||""),"ko"))
+    .forEach(x => {
+      const option = document.createElement("option");
+      option.value = x.id;
+      option.textContent = `${x.name}${x.relation ? " (" + x.relation + ")" : ""}`;
+      sel.appendChild(option);
+    });
+
+  sel.value = p.spouseId || "";
+  document.getElementById("personEditModal").style.display = "block";
+}
+
+function closePersonEdit(){
+  document.getElementById("personEditModal").style.display = "none";
+}
+
+function syncEditAddressFromSpouse(){
+  const spouseId = document.getElementById("editPersonSpouse").value;
+  if(!spouseId) return;
+
+  const spouse = peopleCache.find(x => String(x.id) === String(spouseId));
+  if(spouse && spouse.address){
+    document.getElementById("editPersonAddress").value = spouse.address;
+  }
+}
+
+async function savePersonEdit(){
+  const params = new URLSearchParams();
+  params.append("action","updatePerson");
+  params.append("personId", document.getElementById("editPersonId").value);
+  params.append("name", document.getElementById("editPersonName").value.trim());
+  params.append("relation", document.getElementById("editPersonRelation").value.trim());
+  params.append("phone", document.getElementById("editPersonPhone").value.trim());
+  params.append("address", document.getElementById("editPersonAddress").value.trim());
+  params.append("spouseId", document.getElementById("editPersonSpouse").value);
+  params.append("memo", document.getElementById("editPersonMemo").value.trim());
+  params.append("gift", document.getElementById("editPersonGift").value.trim());
+  params.append("warning", document.getElementById("editPersonWarning").value.trim());
+  params.append("_", Date.now());
+
+  if(!document.getElementById("editPersonName").value.trim()){
+    alert("이름을 입력하세요.");
+    return;
+  }
+
+  try{
+    const res = await fetch(API_URL + "?" + params.toString(), {cache:"no-store"});
+    const data = await res.json();
+
+    if(data.success === false || data.ok === false){
+      alert(data.message || "수정에 실패했습니다.");
+      return;
+    }
+
+    alert(data.message || "사람 정보가 수정되었습니다.");
+    closePersonEdit();
+    await loadPeople();
+    searchPerson();
+  }catch(error){
+    console.error("사람 수정 실패", error);
+    alert("사람 정보 수정 중 오류가 발생했습니다.");
   }
 }
 
