@@ -1631,41 +1631,51 @@ async function loadAddressBook(force=false){
     return;
   }
 
-  if(body) body.innerHTML = '<tr><td colspan="7" class="address-empty">주소록을 불러오는 중...</td></tr>';
-  if(mobile) mobile.innerHTML = '';
+  if(body) body.innerHTML =
+    '<tr><td colspan="7" class="address-empty">주소록을 불러오는 중...</td></tr>';
+  if(mobile) mobile.innerHTML = "";
 
   try{
-    const res = await fetch(API_URL + "?action=getPeople&_=" + Date.now(), {cache:"no-store"});
+    // 기존 사람조회와 같은 API 경로를 사용한다.
+    const res = await fetch(
+      API_URL + "?action=searchPerson&keyword=" + encodeURIComponent("") + "&_=" + Date.now(),
+      {cache:"no-store"}
+    );
     if(!res.ok) throw new Error("HTTP " + res.status);
 
-    const raw = await res.text();
-    const data = JSON.parse(raw);
+    const data = await res.json();
+    if(data && data.success === false) throw new Error(data.message || "주소록 조회 실패");
 
-    if(data && data.success === false){
-      throw new Error(data.message || "사람 목록 조회 실패");
+    let list = [];
+    if(Array.isArray(data)) list = data;
+    else if(Array.isArray(data.people)) list = data.people;
+    else if(Array.isArray(data.results)) list = data.results;
+    else if(Array.isArray(data.persons)) list = data.persons;
+
+    // searchPerson이 빈 검색어를 허용하지 않는 구버전이면 getPeople으로 한 번 더 시도
+    if(!list.length){
+      const res2 = await fetch(API_URL + "?action=getPeople&_=" + Date.now(), {cache:"no-store"});
+      if(!res2.ok) throw new Error("HTTP " + res2.status);
+      const d2 = await res2.json();
+      if(d2 && d2.success === false) throw new Error(d2.message || "사람 목록 조회 실패");
+      list = Array.isArray(d2) ? d2 : (Array.isArray(d2.people) ? d2.people : []);
     }
 
-    // Code.gs 응답 형태가 {people:[...]} 또는 배열 자체인 경우 모두 대응
-    const list = Array.isArray(data) ? data :
-                 Array.isArray(data.people) ? data.people : [];
-
-    addressBookData = list.slice().sort((a,b)=>
-      safePersonValue(a.name).localeCompare(safePersonValue(b.name),"ko")
+    addressBookData = list.map(p=>({
+      ...p,
+      personId: p.personId || p.id || "",
+      spouseName: p.spouseName || ""
+    })).sort((x,y)=>
+      safePersonValue(x.name).localeCompare(safePersonValue(y.name),"ko")
     );
-
-    // 기존 사람 캐시도 같이 맞춰 둠
-    if(typeof peopleCache !== "undefined"){
-      peopleCache = list.slice();
-    }
 
     buildAddressRelationFilter();
     filterAddressBook();
-
   }catch(e){
-    console.error("주소록 조회 오류:",e);
+    console.error("주소록 조회 오류:", e);
     addressBookData = [];
-    if(document.getElementById("addressBookCount"))
-      document.getElementById("addressBookCount").textContent = "0명";
+    const count = document.getElementById("addressBookCount");
+    if(count) count.textContent = "0명";
     if(body) body.innerHTML =
       '<tr><td colspan="7" class="address-empty">주소록 조회에 실패했습니다.</td></tr>';
     if(mobile) mobile.innerHTML =
@@ -2377,6 +2387,16 @@ function formatAppointmentTime(value){
       }).format(d);
     }catch(e){}
   }
+  return s;
+}
+
+function cleanAppointmentDescription(text, time){
+  let s = String(text || "");
+  const t = formatAppointmentTime(time);
+  // ISO time-only values
+  s = s.replace(/1899-12-30T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z?/gi, t);
+  // Apps Script Date strings such as Sat Dec 30 1899 13:00:00 GMT+0827 (한국 표준시)
+  s = s.replace(/[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+30\s+1899\s+\d{1,2}:\d{2}(?::\d{2})?\s+GMT[+-]\d{4}(?:\s*\([^)]*\))?/g, t);
   return s;
 }
 
