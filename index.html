@@ -449,6 +449,7 @@ button:active{ transform:scale(0.98); }
       <label>이름 / 관계 / 전화번호 검색</label>
       <input type="text" id="searchKeyword" placeholder="예: 어머니, 홍길동, 친구">
       <button class="primary" onclick="searchPerson()">검색</button>
+      <button class="gray" style="margin-top:8px" onclick="showAllPeople()">전체 리스트 조회</button>
 
       <div id="personSearchResult" class="empty-box" style="margin-top:14px;">
         이름을 검색하면 등록된 기본정보가 표시됩니다.
@@ -782,6 +783,54 @@ function escapeHtmlValue(value){
     .replace(/'/g,"&#039;");
 }
 
+
+function renderPersonCards(list, showCount=false){
+  const resultBox = document.getElementById("personSearchResult");
+  if(!resultBox) return;
+
+  const sorted = [...list].sort((a,b)=>
+    String(a.name || "").localeCompare(String(b.name || ""), "ko")
+  );
+
+  let html = "";
+  if(showCount){
+    html += `<div style="font-weight:bold;margin:4px 0 12px;">총 등록인원 ${sorted.length}명</div>`;
+  }
+
+  html += sorted.map(p=>`
+    <div class="person-box">
+      <div class="person-name">${escapeHtmlValue(p.name || "-")}</div>
+      <div class="info-line"><strong>관계</strong> ${escapeHtmlValue(p.relation || "-")}</div>
+      <div class="info-line"><strong>전화번호</strong> ${escapeHtmlValue(p.phone || "-")}</div>
+      <div class="info-line"><strong>주소</strong> ${escapeHtmlValue(p.address || "-")}</div>
+      <div class="info-line"><strong>배우자</strong> ${escapeHtmlValue(p.spouseName || "-")}</div>
+      <div class="info-line"><strong>메모</strong> ${escapeHtmlValue(p.memo || "-")}</div>
+      <div class="info-line"><strong>선물 취향</strong> ${escapeHtmlValue(p.gift || "-")}</div>
+      <div class="info-line"><strong>주의사항</strong> ${escapeHtmlValue(p.warning || "-")}</div>
+      <button class="primary" style="margin-top:12px"
+        onclick="openPersonEdit('${p.id}')">정보 수정 · 배우자 연결</button>
+    </div>
+  `).join("");
+
+  resultBox.innerHTML = html || "등록된 사람이 없습니다.";
+}
+
+async function showAllPeople(){
+  const resultBox = document.getElementById("personSearchResult");
+  if(!resultBox) return;
+
+  resultBox.innerHTML = "전체 리스트를 불러오는 중...";
+
+  try{
+    await loadPeople();
+    document.getElementById("searchKeyword").value = "";
+    renderPersonCards(peopleCache, true);
+  }catch(error){
+    console.error("전체 사람 조회 실패", error);
+    resultBox.innerHTML = "전체 리스트를 불러오지 못했습니다.";
+  }
+}
+
 async function searchPerson(){
   const input = document.getElementById("searchKeyword");
   const resultBox = document.getElementById("personSearchResult");
@@ -821,20 +870,7 @@ async function searchPerson(){
       return;
     }
 
-    resultBox.innerHTML = matches.map(p=>`
-      <div class="person-box">
-        <div class="person-name">${escapeHtmlValue(p.name || "-")}</div>
-        <div class="info-line"><strong>관계</strong> ${escapeHtmlValue(p.relation || "-")}</div>
-        <div class="info-line"><strong>전화번호</strong> ${escapeHtmlValue(p.phone || "-")}</div>
-        <div class="info-line"><strong>주소</strong> ${escapeHtmlValue(p.address || "-")}</div>
-        <div class="info-line"><strong>배우자</strong> ${escapeHtmlValue(p.spouseName || "-")}</div>
-        <div class="info-line"><strong>메모</strong> ${escapeHtmlValue(p.memo || "-")}</div>
-        <div class="info-line"><strong>선물 취향</strong> ${escapeHtmlValue(p.gift || "-")}</div>
-        <div class="info-line"><strong>주의사항</strong> ${escapeHtmlValue(p.warning || "-")}</div>
-        <button class="primary" style="margin-top:12px"
-          onclick="openPersonEdit('${p.id}')">정보 수정 · 배우자 연결</button>
-      </div>
-    `).join("");
+    renderPersonCards(matches, false);
   }catch(error){
     console.error("사람 조회 실패", error);
     resultBox.innerHTML = "사람 정보를 불러오지 못했습니다. 잠시 후 다시 시도하세요.";
