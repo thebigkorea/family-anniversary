@@ -622,6 +622,62 @@ input,select,textarea{
   }
 }
 
+
+/* ===== 날짜 일정 팝업 ===== */
+.day-event-popup{
+  width:min(520px,100%);
+  max-height:82vh;
+  overflow:auto;
+  margin:8vh auto 0;
+  background:#fff;
+  border-radius:26px;
+  padding:20px;
+  box-shadow:0 24px 70px rgba(0,0,0,.22);
+}
+.day-event-popup-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom:1px solid #eceef2;
+}
+.day-event-popup-head h2{
+  margin:2px 0 0;
+  font-size:23px;
+}
+.day-event-popup-sub{
+  color:#8a8f98;
+  font-size:12px;
+  font-weight:700;
+}
+.day-event-close{
+  width:38px;
+  height:38px;
+  padding:0;
+  border-radius:50%;
+  background:#f1f3f6;
+  color:#333;
+  font-size:24px;
+  line-height:38px;
+}
+#dayEventModal #selectedDayList .event{
+  padding:16px 2px;
+}
+#dayEventModal .event-buttons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+}
+@media(max-width:600px){
+  #dayEventModal{padding:12px;}
+  .day-event-popup{
+    margin:6vh auto 0;
+    max-height:86vh;
+    border-radius:22px;
+    padding:17px;
+  }
+}
+
 </style>
 </head>
 
@@ -679,10 +735,7 @@ input,select,textarea{
       </div>
     </div>
 
-    <div class="card">
-      <h2>선택한 날짜</h2>
-      <div id="selectedDayList" class="empty-box">날짜를 선택하세요.</div>
-    </div>
+
   </div>
 
   <div id="searchSec" class="section">
@@ -841,6 +894,20 @@ input,select,textarea{
 
 </div>
 
+
+
+<div id="dayEventModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:9998;padding:18px;overflow:auto;" onclick="closeDayEventModal(event)">
+  <div class="day-event-popup" onclick="event.stopPropagation()">
+    <div class="day-event-popup-head">
+      <div>
+        <div class="day-event-popup-sub">선택한 날짜</div>
+        <h2 id="dayEventModalTitle">일정</h2>
+      </div>
+      <button type="button" class="day-event-close" onclick="closeDayEventModal()">×</button>
+    </div>
+    <div id="selectedDayList" class="empty-box"></div>
+  </div>
+</div>
 
 <div id="personEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;padding:18px;overflow:auto;">
   <div class="card" style="max-width:520px;margin:30px auto;">
@@ -1464,9 +1531,15 @@ html += `
 function showDayEvents(day){
   const list = currentMonthEvents.filter(e => Number(e.day) === day);
   const box = document.getElementById("selectedDayList");
+  const modal = document.getElementById("dayEventModal");
+  const title = document.getElementById("dayEventModalTitle");
+
+  title.textContent = `${currentYear}년 ${currentMonth}월 ${day}일`;
 
   if(list.length === 0){
-    box.innerHTML = "선택한 날짜의 기념일이 없습니다.";
+    box.innerHTML = '<div style="padding:22px 2px;color:#777;">등록된 일정이 없습니다.</div>';
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden";
     return;
   }
 
@@ -1490,9 +1563,7 @@ function showDayEvents(day){
         </div>
 
         <div class="event-date">${ev.displayDateText || ev.date}</div>
-
         ${ev.location ? `<div class="event-date">장소: ${ev.location}</div>` : ""}
-
         <div class="event-message">${ev.message || ev.memo || ""}</div>
 
         <div class="event-buttons">
@@ -1505,6 +1576,15 @@ function showDayEvents(day){
   });
 
   box.innerHTML = html;
+  modal.style.display = "block";
+  document.body.style.overflow = "hidden";
+}
+
+function closeDayEventModal(e){
+  if(e && e.target !== e.currentTarget) return;
+  const modal = document.getElementById("dayEventModal");
+  if(modal) modal.style.display = "none";
+  document.body.style.overflow = "";
 }
 
 function getEventByIndex(index, day){
@@ -1693,6 +1773,7 @@ async function deleteCalendarEvent(index, day){
 
   alert(data.message || "삭제 완료");
 
+  closeDayEventModal();
   loadEvents();
   loadMonthlyCalendar();
 }
