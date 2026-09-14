@@ -586,6 +586,42 @@ input,select,textarea{
   .cal-event{font-size:8.5px;padding:3px 2px;}
 }
 
+
+/* ===== 월 선택 제목 잘림 수정 ===== */
+.month-title{
+  overflow:visible !important;
+  min-width:230px;
+  white-space:nowrap;
+}
+.month-title select{
+  box-sizing:border-box;
+  overflow:visible;
+  text-overflow:clip;
+  padding:8px 18px 8px 8px !important;
+}
+#calendarYear{
+  width:118px !important;
+  min-width:118px !important;
+}
+#calendarMonth{
+  width:88px !important;
+  min-width:88px !important;
+}
+.month-control{
+  overflow:visible !important;
+}
+@media(max-width:600px){
+  .month-title{min-width:210px;}
+  #calendarYear{
+    width:112px !important;
+    min-width:112px !important;
+  }
+  #calendarMonth{
+    width:82px !important;
+    min-width:82px !important;
+  }
+}
+
 </style>
 </head>
 
