@@ -2164,7 +2164,7 @@ async function loadEvents(){
           : `<span class="repeat-badge">${event.repeatType === "한번" ? "한 번만" : "매년 반복"}</span>`}
 
         ${event.personName ? `<div class="help">상대방: ${event.personName}</div>` : ""}
-        ${event.time ? `<div class="help">시간: ${event.time}</div>` : ""}
+        ${event.time ? `<div class="help">시간: ${formatAppointmentTime(event.time)}</div>` : ""}
         ${event.location ? `<div class="help">장소: ${event.location}</div>` : ""}
 
         <div class="event-message">
@@ -2303,6 +2303,54 @@ html += `
   grid.innerHTML = html;
 }
 
+
+/* ===== 약속 시간 표시 전용 보정 =====
+   Google Sheets의 시간 값이 1899-12-30T04:32:08.000Z 또는
+   Sat Dec 30 1899 13:00:00 GMT+0827 같은 형태로 넘어와도 HH:mm으로 표시
+*/
+function formatAppointmentTime(value){
+  if(value === null || value === undefined || value === "") return "";
+
+  const s = String(value).trim();
+
+  // ISO 직렬화: 1899-12-30T04:32:08.000Z
+  let m = s.match(/T(\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?Z?$/i);
+  if(m){
+    // Sheets 시간-only Date가 UTC ISO로 온 경우 한국시간(+9)으로 변환
+    const d = new Date(s);
+    if(!Number.isNaN(d.getTime())){
+      const parts = new Intl.DateTimeFormat("ko-KR",{
+        timeZone:"Asia/Seoul", hour:"2-digit", minute:"2-digit",
+        hour12:false
+      }).formatToParts(d);
+      const h = parts.find(x=>x.type==="hour")?.value;
+      const min = parts.find(x=>x.type==="minute")?.value;
+      if(h && min) return `${h}:${min}`;
+    }
+    return `${m[1]}:${m[2]}`;
+  }
+
+  // 이미 HH:mm 또는 HH:mm:ss
+  m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if(m) return `${String(Number(m[1])).padStart(2,"0")}:${m[2]}`;
+
+  // Apps Script Date 문자열: Sat Dec 30 1899 13:00:00 GMT+...
+  m = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\s+GMT/i);
+  if(m) return `${String(Number(m[1])).padStart(2,"0")}:${m[2]}`;
+
+  // 마지막 fallback
+  const d = new Date(s);
+  if(!Number.isNaN(d.getTime())){
+    try{
+      return new Intl.DateTimeFormat("ko-KR",{
+        timeZone:"Asia/Seoul", hour:"2-digit", minute:"2-digit",
+        hour12:false
+      }).format(d);
+    }catch(e){}
+  }
+  return s;
+}
+
 function showDayEvents(day){
   const list = currentMonthEvents.filter(e => Number(e.day) === day);
   const box = document.getElementById("selectedDayList");
@@ -2332,7 +2380,7 @@ function showDayEvents(day){
         <div class="event-date">
           ${
             ev.itemType === "appointment"
-              ? `${ev.personName || ""} ${ev.time ? "· " + ev.time : ""}`
+              ? `${ev.personName || ""} ${ev.time ? "· " + formatAppointmentTime(ev.time) : ""}`
               : `${ev.name || ""} (${ev.relation || ""})`
           }
         </div>
