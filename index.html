@@ -734,6 +734,185 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
   }
 }
 
+
+/* ===== 2026-09-14 반응형 최종 보정 ===== */
+
+/* 1. 상단 배너: PC에서도 사진 전체가 보이도록 */
+.hero-banner{
+  height:auto !important;
+  aspect-ratio:2048 / 576 !important;
+  background-image:url("images/family-main-banner.png") !important;
+  background-size:contain !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
+  background-color:#fff !important;
+  border-radius:18px !important;
+}
+
+/* 2. 연/월 선택: 글자와 화살표가 절대 잘리지 않도록 */
+.month-title{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  min-width:250px !important;
+  overflow:visible !important;
+  white-space:nowrap !important;
+}
+.month-title select{
+  display:block !important;
+  box-sizing:border-box !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+  appearance:auto !important;
+  -webkit-appearance:auto !important;
+  padding:6px 30px 6px 8px !important;
+  line-height:1.25 !important;
+}
+#calendarYear{
+  width:125px !important;
+  min-width:125px !important;
+  max-width:none !important;
+}
+#calendarMonth{
+  width:92px !important;
+  min-width:92px !important;
+  max-width:none !important;
+}
+
+/* 3. 모바일에서는 기존 상단 탭을 쓰지 않고 왼쪽 메뉴와 같은 기능의
+      모바일 전용 메뉴를 사용 */
+.mobile-main-nav{display:none;}
+
+@media(max-width:900px){
+  body{
+    padding:0 !important;
+    overflow-x:hidden !important;
+  }
+  .desktop-sidebar{display:none !important;}
+
+  .app-wrap{
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:12px !important;
+  }
+
+  .hero-banner{
+    width:100% !important;
+    height:auto !important;
+    aspect-ratio:2048 / 576 !important;
+    background-size:contain !important;
+    background-position:center !important;
+    margin:0 0 14px !important;
+    border-radius:18px !important;
+  }
+
+  /* 모바일에서 제목/오늘·내일 카드/옛 탭 제거 */
+  .app-wrap > h1,
+  .badges,
+  .tabs{
+    display:none !important;
+  }
+
+  .mobile-main-nav{
+    display:grid !important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:6px;
+    margin:0 0 12px;
+  }
+  .mobile-main-nav button{
+    border:0;
+    border-radius:12px;
+    background:#fff;
+    color:#334b68;
+    padding:10px 3px;
+    font-size:11px;
+    font-weight:800;
+    white-space:nowrap;
+    box-shadow:0 2px 8px rgba(40,70,110,.05);
+  }
+  .mobile-main-nav button:first-child{
+    background:#2f7df6;
+    color:#fff;
+  }
+
+  #calendarSec.active{
+    display:block !important;
+  }
+
+  #calendarSec > .card:first-child{
+    padding:10px !important;
+  }
+
+  .month-control{
+    display:grid !important;
+    grid-template-columns:42px minmax(220px,1fr) 42px !important;
+    align-items:center !important;
+    gap:5px !important;
+    width:100% !important;
+    overflow:visible !important;
+  }
+  .month-title{
+    min-width:220px !important;
+    width:100% !important;
+    justify-content:center !important;
+    margin:0 !important;
+    gap:4px !important;
+  }
+  .month-title select{
+    font-size:18px !important;
+    padding:6px 24px 6px 6px !important;
+  }
+  #calendarYear{
+    width:112px !important;
+    min-width:112px !important;
+  }
+  #calendarMonth{
+    width:82px !important;
+    min-width:82px !important;
+  }
+
+  .calendar{
+    width:100% !important;
+    table-layout:fixed !important;
+  }
+  .day-cell{
+    min-width:0 !important;
+    min-height:74px !important;
+    padding:5px 3px !important;
+  }
+  .cal-event{
+    max-width:100% !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+  }
+
+  .right-agenda{
+    margin-top:12px !important;
+  }
+}
+
+@media(max-width:390px){
+  .app-wrap{padding:8px !important;}
+  .mobile-main-nav{
+    grid-template-columns:repeat(3,1fr);
+  }
+  .month-control{
+    grid-template-columns:38px minmax(205px,1fr) 38px !important;
+  }
+  .month-title{min-width:205px !important;}
+  #calendarYear{
+    width:108px !important;
+    min-width:108px !important;
+  }
+  #calendarMonth{
+    width:78px !important;
+    min-width:78px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -780,7 +959,16 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
     </div>
   </div>
 
-  <div id="calendarSec" class="section">
+  
+<div class="mobile-main-nav">
+  <button type="button" onclick="showSection('calendarSec',this)">월간달력</button>
+  <button type="button" onclick="showSection('searchSec',this)">사람조회</button>
+  <button type="button" onclick="showSection('person',this)">사람등록</button>
+  <button type="button" onclick="showSection('anniv',this)">기념일추가</button>
+  <button type="button" onclick="showSection('appointmentSec',this)">약속추가</button>
+</div>
+
+<div id="calendarSec" class="section">
     <div class="card">
       <h2>월간 캘린더</h2>
 
