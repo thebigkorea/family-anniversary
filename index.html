@@ -379,6 +379,213 @@ button:active{ transform:scale(0.98); }
 .day-cell.saturday{
   background:#edf4ff;
 }
+
+/* ===== 2026 Calendar App UI Refresh ===== */
+:root{
+  --app-bg:#f6f7f9;
+  --card:#ffffff;
+  --text:#15171a;
+  --muted:#8a8f98;
+  --line:#eceef2;
+  --accent:#2563eb;
+  --soft:#f1f4f8;
+}
+body{
+  background:var(--app-bg);
+  color:var(--text);
+}
+.app-wrap{max-width:620px;}
+.hero-banner{
+  height:126px;
+  border-radius:24px;
+  margin-bottom:14px;
+  box-shadow:none;
+}
+h1{
+  font-size:25px;
+  margin:0 0 14px;
+}
+.card{
+  border-radius:24px;
+  box-shadow:0 2px 14px rgba(20,25,35,.055);
+  border:1px solid rgba(0,0,0,.025);
+}
+.badges{gap:8px;margin-bottom:12px;}
+.badge{
+  padding:11px 6px;
+  border-radius:16px;
+  font-size:14px;
+}
+.tabs{
+  display:flex;
+  overflow-x:auto;
+  gap:7px;
+  padding:2px 1px 8px;
+  margin-bottom:12px;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  flex:0 0 auto;
+  width:auto;
+  min-width:86px;
+  border-radius:999px;
+  padding:11px 15px;
+  background:#eef1f5;
+  font-size:13px;
+}
+.tab.active{
+  background:#17191d;
+  color:#fff;
+}
+
+/* Calendar shell */
+#calendarSec .card:first-child{
+  padding:18px 14px 16px;
+}
+#calendarSec .card:first-child h2{
+  display:none;
+}
+.month-control{
+  margin:0 2px 14px;
+  gap:6px;
+}
+.month-control button{
+  width:42px;
+  height:42px;
+  padding:0;
+  border-radius:50%;
+  background:#f1f3f6;
+  font-size:15px;
+}
+.month-title{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:3px;
+}
+.month-title select{
+  border:0;
+  background:transparent;
+  min-width:0;
+  padding:8px 3px;
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-.5px;
+  appearance:auto;
+}
+#calendarYear{width:92px;}
+#calendarMonth{width:66px;}
+
+.calendar{
+  gap:0;
+  border-top:1px solid var(--line);
+}
+.day-name{
+  padding:11px 0 9px;
+  font-size:12px;
+  color:#8b9098;
+  border-bottom:1px solid var(--line);
+}
+.day-cell{
+  position:relative;
+  min-height:82px;
+  border:0;
+  border-radius:0;
+  background:#fff;
+  padding:7px 4px 5px;
+  border-bottom:1px solid #f1f2f4;
+}
+.day-cell:hover{background:#fafbfc;}
+.day-cell.sunday,
+.day-cell.saturday{background:#fff;}
+.day-cell.empty{
+  background:#fff;
+  border-bottom:1px solid #f1f2f4;
+}
+.day-num{
+  width:29px;
+  height:29px;
+  margin:0 auto 3px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  font-weight:600;
+}
+.day-cell.sunday .day-num{color:#e5484d;}
+.day-cell.saturday .day-num{color:#3478f6;}
+.day-cell.today-cell .day-num{
+  background:var(--accent);
+  color:#fff;
+}
+.cal-event{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  margin:2px 1px 0;
+  padding:3px 4px;
+  border-radius:5px;
+  font-size:9.5px;
+  line-height:1.2;
+  background:#eaf1ff;
+  color:#2463c7;
+}
+.cal-event.appointment{
+  background:#f1eaff;
+  color:#7b43c7;
+}
+.cal-event .lunar-text{display:none;}
+.day-cell > .lunar-text{
+  text-align:center;
+  font-size:9px;
+  color:#9a9ea6;
+  margin-top:2px;
+}
+#calendarSec .help{
+  text-align:center;
+  color:#9a9ea6;
+  margin-top:12px;
+  font-size:12px;
+}
+
+/* Selected day: iOS/Samsung-like agenda */
+#calendarSec .card:nth-child(2){
+  padding:18px;
+}
+#calendarSec .card:nth-child(2) h2{
+  font-size:18px;
+  margin-bottom:10px;
+}
+#selectedDayList .event{
+  padding:14px 2px;
+}
+#selectedDayList .event-title{
+  font-size:17px;
+}
+#selectedDayList .event-message{
+  background:#f5f6f8;
+}
+
+/* General form polish */
+input,select,textarea{
+  border-color:#e2e5e9;
+  background:#fff;
+}
+.primary{background:#2468f2;}
+.person-box{background:#fbfcfe;}
+
+@media(max-width:600px){
+  body{padding:10px;}
+  .app-wrap{max-width:none;}
+  .hero-banner{height:112px;border-radius:20px;}
+  .card{border-radius:20px;padding:16px;}
+  .day-cell{min-height:72px;padding:5px 2px 4px;}
+  .day-num{width:27px;height:27px;font-size:12px;}
+  .cal-event{font-size:8.5px;padding:3px 2px;}
+}
+
 </style>
 </head>
 
@@ -1187,8 +1394,15 @@ function renderCalendar(){
       week === 6 ? "saturday" :
       "";
 
+    const now = new Date();
+    const isToday =
+      now.getFullYear() === currentYear &&
+      (now.getMonth() + 1) === currentMonth &&
+      now.getDate() === day;
+    const todayClass = isToday ? "today-cell" : "";
+
 html += `
-  <div class="day-cell ${dayClass}" onclick="showDayEvents(${day})">
+  <div class="day-cell ${dayClass} ${todayClass}" onclick="showDayEvents(${day})">
     <div class="day-num">${day}</div>
 `;
 
