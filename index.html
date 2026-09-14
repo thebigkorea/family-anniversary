@@ -913,6 +913,148 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
   }
 }
 
+
+/* ===== 사진 없는 미니멀 대시보드 최종 디자인 ===== */
+.hero-banner{display:none !important;}
+
+.dashboard-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  width:100%;
+  min-height:128px;
+  padding:26px 34px;
+  margin:0 0 18px;
+  background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+  border:1px solid #e8eff8;
+  border-radius:20px;
+  box-shadow:0 5px 22px rgba(50,85,125,.07);
+  box-sizing:border-box;
+}
+.dashboard-header-main{
+  display:flex;
+  align-items:center;
+  gap:18px;
+}
+.dashboard-header-icon{
+  width:66px;
+  height:66px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  background:#eaf3ff;
+  color:#1769e8;
+  font-size:28px;
+  font-weight:900;
+}
+.dashboard-header-title{
+  color:#0d2d55;
+  font-size:31px;
+  line-height:1.15;
+  font-weight:900;
+  letter-spacing:-1.2px;
+}
+.dashboard-header-sub{
+  margin-top:9px;
+  color:#657d9b;
+  font-size:14px;
+  font-weight:600;
+}
+.dashboard-header-message{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding-left:24px;
+  border-left:1px solid #dce6f2;
+  color:#647b98;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.55;
+  white-space:nowrap;
+}
+.heart-circle{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#edf5ff;
+  color:#4389ee;
+  font-size:20px;
+}
+
+/* 기존 큰 사진 아래에 있던 제목은 새 헤더와 중복되므로 제거 */
+.app-wrap > h1{display:none !important;}
+
+/* PC에서 요약 카드 다시 표시 */
+@media(min-width:901px){
+  .app-wrap > .badges{
+    display:grid !important;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+    margin:0 0 18px !important;
+  }
+  .app-wrap > .badges .badge{
+    min-height:82px;
+    border-radius:18px !important;
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
+    line-height:1.6;
+    font-weight:900;
+    box-shadow:0 4px 16px rgba(50,85,125,.05);
+  }
+  .app-wrap > .badges .today{background:#fff3f3 !important;color:#e93c35 !important;}
+  .app-wrap > .badges .tomorrow{background:#fff8ed !important;color:#ef7a16 !important;}
+  .app-wrap > .badges .week{background:#f0f6ff !important;color:#1769e8 !important;}
+}
+
+/* 달력 영역을 위로 끌어올리고 여백 정돈 */
+.dashboard-layout{
+  align-items:stretch !important;
+}
+#calendarSec > .card:first-child{
+  box-shadow:0 5px 20px rgba(50,85,125,.06) !important;
+  border:1px solid #e5edf7 !important;
+}
+.right-agenda{
+  box-shadow:0 5px 20px rgba(50,85,125,.06) !important;
+  border:1px solid #e5edf7 !important;
+}
+
+/* 모바일: 사진 없이 작은 브랜드 헤더 */
+@media(max-width:900px){
+  .dashboard-header{
+    min-height:auto;
+    padding:16px;
+    margin:0 0 12px;
+    border-radius:16px;
+  }
+  .dashboard-header-icon{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    font-size:21px;
+  }
+  .dashboard-header-main{gap:12px;}
+  .dashboard-header-title{
+    font-size:21px;
+    letter-spacing:-.6px;
+  }
+  .dashboard-header-sub{
+    margin-top:5px;
+    font-size:11px;
+    line-height:1.4;
+  }
+  .dashboard-header-message{display:none;}
+  .app-wrap > .badges{display:none !important;}
+}
+
 </style>
 </head>
 
@@ -931,8 +1073,19 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
 
 <div class="app-wrap">
 
-  <div class="hero-banner">
-    <img src="images/family-banner.png" alt="가족 기념일 관리 이미지">
+  
+  <div class="dashboard-header">
+    <div class="dashboard-header-main">
+      <div class="dashboard-header-icon">▣</div>
+      <div>
+        <div class="dashboard-header-title">가족·지인 기념일 관리</div>
+        <div class="dashboard-header-sub">소중한 사람들의 특별한 날을 기억하고 축하하세요.</div>
+      </div>
+    </div>
+    <div class="dashboard-header-message">
+      <span class="heart-circle">♥</span>
+      <span>기억하는 마음이<br>더 가까운 관계를 만듭니다.</span>
+    </div>
   </div>
 
   <h1>가족·지인 기념일 관리</h1>
