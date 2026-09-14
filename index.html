@@ -1636,43 +1636,34 @@ async function loadAddressBook(force=false){
   if(mobile) mobile.innerHTML = "";
 
   try{
-    // 기존 사람조회와 같은 API 경로를 사용한다.
-    const res = await fetch(
-      API_URL + "?action=searchPerson&keyword=" + encodeURIComponent("") + "&_=" + Date.now(),
-      {cache:"no-store"}
-    );
+    const params = new URLSearchParams({
+      action:"searchPerson",
+      keyword:"",
+      _ : String(Date.now())
+    });
+    const res = await fetch(API_URL + "?" + params.toString(), {cache:"no-store"});
     if(!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
-    if(data && data.success === false) throw new Error(data.message || "주소록 조회 실패");
-
-    let list = [];
-    if(Array.isArray(data)) list = data;
-    else if(Array.isArray(data.people)) list = data.people;
-    else if(Array.isArray(data.results)) list = data.results;
-    else if(Array.isArray(data.persons)) list = data.persons;
-
-    // searchPerson이 빈 검색어를 허용하지 않는 구버전이면 getPeople으로 한 번 더 시도
-    if(!list.length){
-      const res2 = await fetch(API_URL + "?action=getPeople&_=" + Date.now(), {cache:"no-store"});
-      if(!res2.ok) throw new Error("HTTP " + res2.status);
-      const d2 = await res2.json();
-      if(d2 && d2.success === false) throw new Error(d2.message || "사람 목록 조회 실패");
-      list = Array.isArray(d2) ? d2 : (Array.isArray(d2.people) ? d2.people : []);
+    if(!data || data.success !== true || !Array.isArray(data.people)){
+      throw new Error(data?.message || "주소록 응답 형식 오류");
     }
 
-    addressBookData = list.map(p=>({
-      ...p,
-      personId: p.personId || p.id || "",
-      spouseName: p.spouseName || ""
-    })).sort((x,y)=>
-      safePersonValue(x.name).localeCompare(safePersonValue(y.name),"ko")
-    );
+    addressBookData = data.people
+      .map(p => ({
+        ...p,
+        id: p.id || p.personId || "",
+        spouseName: p.spouseName || ""
+      }))
+      .sort((a,b) => safePersonValue(a.name).localeCompare(safePersonValue(b.name),"ko"));
+
+    // 다른 화면에서도 재사용
+    peopleCache = addressBookData.slice();
 
     buildAddressRelationFilter();
     filterAddressBook();
-  }catch(e){
-    console.error("주소록 조회 오류:", e);
+  }catch(err){
+    console.error("주소록 조회 오류:", err);
     addressBookData = [];
     const count = document.getElementById("addressBookCount");
     if(count) count.textContent = "0명";
@@ -2390,14 +2381,30 @@ function formatAppointmentTime(value){
   return s;
 }
 
-function cleanAppointmentDescription(text, time){
-  let s = String(text || "");
-  const t = formatAppointmentTime(time);
-  // ISO time-only values
-  s = s.replace(/1899-12-30T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z?/gi, t);
-  // Apps Script Date strings such as Sat Dec 30 1899 13:00:00 GMT+0827 (한국 표준시)
-  s = s.replace(/[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+30\s+1899\s+\d{1,2}:\d{2}(?::\d{2})?\s+GMT[+-]\d{4}(?:\s*\([^)]*\))?/g, t);
-  return s;
+
+function cleanEventMessage(ev){
+  let text = String(ev?.message || ev?.memo || "");
+  if(ev?.itemType !== "appointment") return text;
+
+  const time = formatAppointmentTime(ev?.time);
+
+  // 1899 ISO time-only
+  text = text.replace(/1899-12-30T\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?Z?/gi, time);
+
+  // "Sat Dec 30 1899 13:00:00 GMT+0827 (한국 표준시)" 형태
+  text = text.replace(
+    /(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+1899\s+\d{1,2}:\d{2}(?::\d{2})?\s+GMT[+-]\d{4}(?:\s*\([^)]*\))?/gi,
+    time
+  );
+
+  // 혹시 위 형식과 약간 달라도 GMT가 포함된 1899 시간 문자열 제거
+  text = text.replace(/[^.]*1899[^.]*GMT[^.]*?(?=장소:|$)/gi, time ? ` 시간: ${time} ` : " ");
+
+  // 중복 시간 문구 정리
+  text = text.replace(/시간:\s*시간:\s*/g, "시간: ");
+  text = text.replace(/\s{2,}/g, " ").trim();
+
+  return text;
 }
 
 function showDayEvents(day){
@@ -2436,7 +2443,7 @@ function showDayEvents(day){
 
         <div class="event-date">${ev.displayDateText || ev.date}</div>
         ${ev.location ? `<div class="event-date">장소: ${ev.location}</div>` : ""}
-        <div class="event-message">${ev.message || ev.memo || ""}</div>
+        <div class="event-message">${cleanEventMessage(ev)}</div>
 
         <div class="event-buttons">
           <button class="green" onclick="editCalendarEvent(${index}, ${day})">수정</button>
