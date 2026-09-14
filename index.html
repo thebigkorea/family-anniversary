@@ -1683,7 +1683,7 @@ function buildAddressRelationFilter(){
   )].sort((a,b)=>a.localeCompare(b,"ko"));
 
   sel.innerHTML = '<option value="">전체 관계</option>' +
-    relations.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join("");
+    relations.map(r=>`<option value="${escapeHtmlValue(r)}">${escapeHtmlValue(r)}</option>`).join("");
 
   if(relations.includes(current)) sel.value = current;
 }
@@ -1721,13 +1721,13 @@ function renderAddressBook(list){
     body.innerHTML = list.map(p=>{
       const phone = safePersonValue(p.phone);
       return `<tr>
-        <td class="address-person-name">${esc(safePersonValue(p.name))}</td>
-        <td>${esc(safePersonValue(p.relation)) || '<span class="address-text-muted">-</span>'}</td>
-        <td>${phone ? `<a class="address-phone" href="tel:${esc(phone.replace(/[^0-9+]/g,""))}">${esc(phone)}</a>` : '<span class="address-text-muted">-</span>'}</td>
-        <td>${esc(safePersonValue(p.address)) || '<span class="address-text-muted">-</span>'}</td>
-        <td>${esc(safePersonValue(p.spouseName)) || '<span class="address-text-muted">-</span>'}</td>
-        <td>${esc(safePersonValue(p.memo)) || '<span class="address-text-muted">-</span>'}</td>
-        <td><button class="address-edit-btn" onclick="openPersonEdit('${esc(safePersonValue(p.personId))}')">수정</button></td>
+        <td class="address-person-name">${escapeHtmlValue(safePersonValue(p.name))}</td>
+        <td>${escapeHtmlValue(safePersonValue(p.relation)) || '<span class="address-text-muted">-</span>'}</td>
+        <td>${phone ? `<a class="address-phone" href="tel:${escapeHtmlValue(phone.replace(/[^0-9+]/g,""))}">${escapeHtmlValue(phone)}</a>` : '<span class="address-text-muted">-</span>'}</td>
+        <td>${escapeHtmlValue(safePersonValue(p.address)) || '<span class="address-text-muted">-</span>'}</td>
+        <td>${escapeHtmlValue(safePersonValue(p.spouseName)) || '<span class="address-text-muted">-</span>'}</td>
+        <td>${escapeHtmlValue(safePersonValue(p.memo)) || '<span class="address-text-muted">-</span>'}</td>
+        <td><button class="address-edit-btn" onclick="openPersonEdit('${escapeHtmlValue(safePersonValue(p.personId))}')">수정</button></td>
       </tr>`;
     }).join("");
   }
@@ -1737,16 +1737,16 @@ function renderAddressBook(list){
       const phone = safePersonValue(p.phone);
       return `<div class="address-mobile-card">
         <div class="address-mobile-top">
-          <div class="address-mobile-name">${esc(safePersonValue(p.name))}</div>
-          <div class="address-mobile-relation">${esc(safePersonValue(p.relation) || "미분류")}</div>
+          <div class="address-mobile-name">${escapeHtmlValue(safePersonValue(p.name))}</div>
+          <div class="address-mobile-relation">${escapeHtmlValue(safePersonValue(p.relation) || "미분류")}</div>
         </div>
-        <div class="address-mobile-line">☎ ${phone ? esc(phone) : "-"}</div>
-        <div class="address-mobile-line">⌂ ${esc(safePersonValue(p.address)) || "-"}</div>
-        ${p.spouseName ? `<div class="address-mobile-line">배우자 · ${esc(safePersonValue(p.spouseName))}</div>` : ""}
-        ${p.memo ? `<div class="address-mobile-line">메모 · ${esc(safePersonValue(p.memo))}</div>` : ""}
+        <div class="address-mobile-line">☎ ${phone ? escapeHtmlValue(phone) : "-"}</div>
+        <div class="address-mobile-line">⌂ ${escapeHtmlValue(safePersonValue(p.address)) || "-"}</div>
+        ${p.spouseName ? `<div class="address-mobile-line">배우자 · ${escapeHtmlValue(safePersonValue(p.spouseName))}</div>` : ""}
+        ${p.memo ? `<div class="address-mobile-line">메모 · ${escapeHtmlValue(safePersonValue(p.memo))}</div>` : ""}
         <div class="address-mobile-actions">
-          ${phone ? `<a href="tel:${esc(phone.replace(/[^0-9+]/g,""))}">전화</a>` : ""}
-          <button type="button" onclick="openPersonEdit('${esc(safePersonValue(p.personId))}')">정보 수정</button>
+          ${phone ? `<a href="tel:${escapeHtmlValue(phone.replace(/[^0-9+]/g,""))}">전화</a>` : ""}
+          <button type="button" onclick="openPersonEdit('${escapeHtmlValue(safePersonValue(p.personId))}')">정보 수정</button>
         </div>
       </div>`;
     }).join("");
@@ -1758,7 +1758,7 @@ function renderAddressBook(list){
 function updateSummaryBadgeVisibility(sectionId){
   const badges = document.querySelector(".app-wrap > .badges");
   if(!badges) return;
-  badges.style.display = (sectionId === "calendarSec") ? "" : "none";
+  badges.style.setProperty("display", sectionId === "calendarSec" ? "grid" : "none", "important");
 }
 
 function showSection(id, btn){
