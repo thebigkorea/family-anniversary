@@ -1217,6 +1217,82 @@ let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth() + 1;
 let currentMonthEvents = [];
 
+/* ===== 월간 캘린더 브라우저 캐시 ===== */
+const monthDataCache = new Map();
+const monthRequestCache = new Map();
+const MONTH_CLIENT_CACHE_MS = 5 * 60 * 1000;
+
+function monthCacheKey(year, month){
+  return `${year}-${String(month).padStart(2,"0")}`;
+}
+
+function clearMonthClientCache(){
+  monthDataCache.clear();
+  monthRequestCache.clear();
+}
+
+function adjacentMonth(year, month, diff){
+  const d = new Date(year, month - 1 + diff, 1);
+  return {year:d.getFullYear(), month:d.getMonth()+1};
+}
+
+async function fetchMonthlyData(year, month, force=false){
+  const key = monthCacheKey(year, month);
+  const now = Date.now();
+  const saved = monthDataCache.get(key);
+
+  if(!force && saved && (now - saved.savedAt) < MONTH_CLIENT_CACHE_MS){
+    return saved.data;
+  }
+
+  if(!force && monthRequestCache.has(key)){
+    return monthRequestCache.get(key);
+  }
+
+  const promise = (async()=>{
+    const url = API_URL
+      + `?action=getMonthlyEvents&year=${encodeURIComponent(year)}`
+      + `&month=${encodeURIComponent(month)}`;
+
+    const res = await fetch(url, {method:"GET", cache:"default", redirect:"follow"});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+
+    const raw = await res.text();
+    let data;
+    try{
+      data = JSON.parse(raw);
+    }catch(err){
+      console.error("월간 일정 JSON 변환 실패:", raw);
+      throw new Error("서버 응답이 JSON 형식이 아닙니다.");
+    }
+
+    if(data && data.success === false){
+      throw new Error(data.message || "월간 일정 조회 실패");
+    }
+
+    monthDataCache.set(key, {savedAt:Date.now(), data});
+    return data;
+  })();
+
+  monthRequestCache.set(key, promise);
+
+  try{
+    return await promise;
+  }finally{
+    monthRequestCache.delete(key);
+  }
+}
+
+function prefetchAdjacentMonths(year, month){
+  [-1, 1].forEach(diff=>{
+    const next = adjacentMonth(year, month, diff);
+    // 화면 렌더링을 방해하지 않도록 조용히 미리 받아둠
+    setTimeout(()=>{
+      fetchMonthlyData(next.year, next.month).catch(()=>{});
+    }, 80);
+  });
+}
+
 function initCalendarSelect(){
   const yearSelect = document.getElementById("calendarYear");
   const monthSelect = document.getElementById("calendarMonth");
@@ -1589,8 +1665,9 @@ async function saveAnniversary(){
   document.getElementById("leapMonth").value = "N";
   document.getElementById("repeatType").value = "매년";
 
+  clearMonthClientCache();
   loadEvents();
-  loadMonthlyCalendar();
+  loadMonthlyCalendar(true);
 }
 
 
@@ -1645,8 +1722,9 @@ async function saveAppointment(){
   document.getElementById("appointmentAlertDays").value = "7";
 
   setDefaultAppointmentDate();
+  clearMonthClientCache();
   loadEvents();
-  loadMonthlyCalendar();
+  loadMonthlyCalendar(true);
 }
 
 
@@ -1713,55 +1791,40 @@ async function loadEvents(){
   document.getElementById("weekBadge").innerHTML = `7일 이내<br>${data.count}건`;
 }
 
-async function loadMonthlyCalendar(){
+async function loadMonthlyCalendar(force=false){
   const grid = document.getElementById("calendarGrid");
 
   syncCalendarSelect();
-  if(grid) grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;text-align:center;color:#7890aa">일정을 불러오는 중...</div>';
+
+  const key = monthCacheKey(currentYear, currentMonth);
+  const cached = !force ? monthDataCache.get(key) : null;
+
+  // 브라우저에 이미 있으면 기다리지 않고 즉시 그림
+  if(cached && (Date.now() - cached.savedAt) < MONTH_CLIENT_CACHE_MS){
+    currentMonthEvents = Array.isArray(cached.data?.events) ? cached.data.events : [];
+    renderCalendar();
+    if(typeof renderMonthAgenda === "function") renderMonthAgenda();
+    prefetchAdjacentMonths(currentYear, currentMonth);
+    return;
+  }
+
+  if(grid){
+    grid.innerHTML =
+      '<div style="grid-column:1/-1;padding:18px;text-align:center;color:#7890aa">일정을 불러오는 중...</div>';
+  }
 
   try{
-    const url = API_URL
-      + `?action=getMonthlyEvents&year=${encodeURIComponent(currentYear)}`
-      + `&month=${encodeURIComponent(currentMonth)}`
-      + `&_=${Date.now()}`;
-
-    const res = await fetch(url, {
-      method:"GET",
-      cache:"no-store",
-      redirect:"follow"
-    });
-
-    if(!res.ok){
-      throw new Error("HTTP " + res.status);
-    }
-
-    const raw = await res.text();
-    let data;
-
-    try{
-      data = JSON.parse(raw);
-    }catch(parseError){
-      console.error("월간 일정 JSON 변환 실패:", raw);
-      throw new Error("서버 응답이 JSON 형식이 아닙니다.");
-    }
-
-    if(data && data.success === false){
-      throw new Error(data.message || "월간 일정 조회 실패");
-    }
-
+    const data = await fetchMonthlyData(currentYear, currentMonth, force);
     currentMonthEvents = Array.isArray(data?.events) ? data.events : [];
-
-    console.log(
-      `[월간일정] ${currentYear}-${String(currentMonth).padStart(2,"0")} / ${currentMonthEvents.length}건`,
-      currentMonthEvents
-    );
 
     renderCalendar();
     if(typeof renderMonthAgenda === "function") renderMonthAgenda();
 
+    // 현재 달 표시 후 앞/뒤 달을 미리 로딩
+    prefetchAdjacentMonths(currentYear, currentMonth);
+
   }catch(e){
     console.error("월간 일정 조회 오류:", e);
-
     currentMonthEvents = [];
     renderCalendar();
 
@@ -2125,7 +2188,6 @@ function moveMonth(diff){
 
 initCalendarSelect();
 loadPeople();
-loadEvents();
 loadMonthlyCalendar();
 
 document.getElementById("searchKeyword")?.addEventListener("keydown", function(e){
