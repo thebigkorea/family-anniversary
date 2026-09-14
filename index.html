@@ -472,6 +472,14 @@ button:active{ transform:scale(0.98); }
       <label>주소</label>
       <input type="text" id="personAddress">
 
+      <label>배우자</label>
+      <select id="personSpouse" onchange="syncAddressFromSpouse()">
+        <option value="">배우자 없음 / 선택 안 함</option>
+      </select>
+      <div class="help">
+        배우자를 선택하면 등록된 배우자의 주소를 자동으로 가져옵니다.
+      </div>
+
       <label>메모</label>
       <textarea id="personMemo"></textarea>
 
@@ -648,6 +656,7 @@ function showSection(id, btn){
   btn.classList.add("active");
 
   if(id === "anniv") loadPeople();
+  if(id === "person") loadPeople();
   if(id === "home") loadEvents();
   if(id === "calendarSec") loadMonthlyCalendar();
   if(id === "appointmentSec") setDefaultAppointmentDate();
@@ -661,6 +670,7 @@ async function savePerson(){
   params.append("relation", document.getElementById("personRelation").value);
   params.append("phone", document.getElementById("personPhone").value);
   params.append("address", document.getElementById("personAddress").value);
+  params.append("spouseId", document.getElementById("personSpouse").value);
   params.append("memo", document.getElementById("personMemo").value);
   params.append("gift", document.getElementById("personGift").value);
   params.append("warning", document.getElementById("personWarning").value);
@@ -674,6 +684,7 @@ async function savePerson(){
   document.getElementById("personRelation").value = "";
   document.getElementById("personPhone").value = "";
   document.getElementById("personAddress").value = "";
+  document.getElementById("personSpouse").value = "";
   document.getElementById("personMemo").value = "";
   document.getElementById("personGift").value = "";
   document.getElementById("personWarning").value = "";
@@ -688,15 +699,41 @@ async function loadPeople(){
   peopleCache = data.people || [];
 
   const list = document.getElementById("peopleList");
-  list.innerHTML = "";
+  if(list){
+    list.innerHTML = "";
+    peopleCache.forEach(p=>{
+      const option = document.createElement("option");
+      option.value = `${p.name} (${p.relation})`;
+      list.appendChild(option);
+    });
+  }
 
-  peopleCache.forEach(p=>{
-    const option = document.createElement("option");
-    option.value = `${p.name} (${p.relation})`;
-    list.appendChild(option);
-  });
+  const spouseSelect = document.getElementById("personSpouse");
+  if(spouseSelect){
+    const selected = spouseSelect.value;
+    spouseSelect.innerHTML = '<option value="">배우자 없음 / 선택 안 함</option>';
+    peopleCache.forEach(p=>{
+      const option = document.createElement("option");
+      option.value = p.id;
+      option.textContent = `${p.name}${p.relation ? " (" + p.relation + ")" : ""}`;
+      spouseSelect.appendChild(option);
+    });
+    spouseSelect.value = selected;
+  }
 }
 
+function syncAddressFromSpouse(){
+  const spouseId = document.getElementById("personSpouse")?.value || "";
+  if(!spouseId) return;
+
+  const spouse = peopleCache.find(p => String(p.id) === String(spouseId));
+  if(!spouse) return;
+
+  const addressInput = document.getElementById("personAddress");
+  if(addressInput && spouse.address){
+    addressInput.value = spouse.address;
+  }
+}
 
 function escapeHtmlValue(value){
   return String(value ?? "")
@@ -752,6 +789,7 @@ async function searchPerson(){
         <div class="info-line"><strong>관계</strong> ${escapeHtmlValue(p.relation || "-")}</div>
         <div class="info-line"><strong>전화번호</strong> ${escapeHtmlValue(p.phone || "-")}</div>
         <div class="info-line"><strong>주소</strong> ${escapeHtmlValue(p.address || "-")}</div>
+        <div class="info-line"><strong>배우자</strong> ${escapeHtmlValue(p.spouseName || "-")}</div>
         <div class="info-line"><strong>메모</strong> ${escapeHtmlValue(p.memo || "-")}</div>
         <div class="info-line"><strong>선물 취향</strong> ${escapeHtmlValue(p.gift || "-")}</div>
         <div class="info-line"><strong>주의사항</strong> ${escapeHtmlValue(p.warning || "-")}</div>
@@ -878,7 +916,7 @@ async function saveAppointment(){
 
 
 async function loadEvents(){
-  const res = await fetch(API_URL + "?action=getUpcomingEvents");
+  const res = await fetch(API_URL + "?action=getUpcomingEvents&_=" + Date.now(), {cache:"no-store"});
   const data = await res.json();
 
   const list = document.getElementById("eventList");
@@ -948,7 +986,8 @@ async function loadMonthlyCalendar(){
 
   try{
     const res = await fetch(
-      API_URL + `?action=getMonthlyEvents&year=${currentYear}&month=${currentMonth}`
+      API_URL + `?action=getMonthlyEvents&year=${currentYear}&month=${currentMonth}&_=${Date.now()}`,
+      {cache:"no-store"}
     );
     const data = await res.json();
     currentMonthEvents = data.events || [];
@@ -1103,11 +1142,42 @@ async function editCalendarEvent(index, day){
     const eventName = prompt("행사명", ev.eventName || "");
     if(eventName === null) return;
 
-    const month = prompt("월", ev.originalMonth || currentMonth);
+    const calendarType = prompt("양력 또는 음력", ev.calendarType || "양력");
+    if(calendarType === null) return;
+    if(!["양력","음력"].includes(calendarType.trim())){
+      alert("양력 또는 음력으로 입력하세요.");
+      return;
+    }
+
+    const month = prompt("월 (1~12)", ev.originalMonth || currentMonth);
     if(month === null) return;
 
     const dayValue = prompt("일", ev.originalDay || ev.day);
     if(dayValue === null) return;
+
+    const m = Number(month);
+    const d = Number(dayValue);
+    if(!Number.isInteger(m) || m < 1 || m > 12 || !Number.isInteger(d) || d < 1 || d > 31){
+      alert("월/일을 올바르게 입력하세요.");
+      return;
+    }
+
+    if(calendarType.trim() === "양력"){
+      const check = new Date(currentYear, m - 1, d);
+      if(check.getMonth() + 1 !== m || check.getDate() !== d){
+        alert("존재하지 않는 날짜입니다.");
+        return;
+      }
+    }
+
+    let leap = ev.leapMonth || "N";
+    if(calendarType.trim() === "음력"){
+      const leapInput = prompt("윤달 여부 (Y/N)", leap);
+      if(leapInput === null) return;
+      leap = String(leapInput).trim().toUpperCase() === "Y" ? "Y" : "N";
+    }else{
+      leap = "N";
+    }
 
     const memo = prompt("메모", ev.memo || "");
     if(memo === null) return;
@@ -1117,16 +1187,20 @@ async function editCalendarEvent(index, day){
     params.append("eventId", ev.eventId);
     params.append("eventType", eventType);
     params.append("eventName", eventName);
-    params.append("calendarType", ev.calendarType || "양력");
-    params.append("month", month);
-    params.append("day", dayValue);
-    params.append("leapMonth", ev.leapMonth || "N");
+    params.append("calendarType", calendarType.trim());
+    params.append("month", m);
+    params.append("day", d);
+    params.append("leapMonth", leap);
     params.append("alertDays", ev.alertDays || 7);
     params.append("repeatType", ev.repeatType || "매년");
     params.append("memo", memo);
 
-    const res = await fetch(API_URL + "?" + params.toString());
+    const res = await fetch(API_URL + "?" + params.toString() + "&_=" + Date.now(), {cache:"no-store"});
     const data = await res.json();
+    if(!data.success){
+      alert(data.message || "수정 실패");
+      return;
+    }
     alert(data.message || "수정 완료");
   }
 
