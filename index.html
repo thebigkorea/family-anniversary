@@ -1134,6 +1134,46 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
   .address-mobile-actions button{background:#f3f5f8;color:#536b85;}
 }
 
+
+/* ===== 달력 날짜 클릭 빠른등록 ===== */
+.quick-day-modal{
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(22,34,52,.28); backdrop-filter:blur(3px);
+  align-items:center; justify-content:center; padding:18px;
+}
+.quick-day-modal.open{display:flex}
+.quick-day-box{
+  width:min(420px,94vw); background:#fff; border-radius:22px;
+  box-shadow:0 22px 70px rgba(25,45,75,.22); padding:24px;
+  border:1px solid #e7edf6;
+}
+.quick-day-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.quick-day-head strong{font-size:20px;color:#17345e}
+.quick-day-close{
+  border:0;background:#f2f5fa;width:34px;height:34px;border-radius:50%;
+  cursor:pointer;font-size:18px;color:#52657e
+}
+.quick-day-sub{font-size:13px;color:#718096;margin-bottom:18px}
+.quick-day-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quick-add-btn{
+  border:1px solid #e3eaf4;background:#f8fbff;border-radius:17px;
+  padding:20px 14px;cursor:pointer;text-align:left;transition:.15s;
+}
+.quick-add-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(40,80,130,.10)}
+.quick-add-btn .ico{display:block;font-size:25px;margin-bottom:8px}
+.quick-add-btn b{display:block;font-size:15px;color:#17345e;margin-bottom:4px}
+.quick-add-btn span{font-size:11px;color:#7b8ca4}
+.quick-add-btn.anniv{background:#f7f4ff}
+.quick-view-btn{
+  width:100%;margin-top:12px;border:0;border-radius:12px;padding:11px;
+  background:#eef4ff;color:#2d64b3;font-weight:700;cursor:pointer
+}
+.day-cell:not(.empty){cursor:pointer}
+.day-cell:not(.empty):hover{background:#f8fbff}
+.cal-event{cursor:pointer}
+@media(max-width:600px){.quick-day-actions{grid-template-columns:1fr}}
+/* ===== 빠른등록 끝 ===== */
+
 </style>
 </head>
 
@@ -1483,6 +1523,32 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
 
     <button class="primary" onclick="savePersonEdit()">수정 저장</button>
     <button class="gray" style="margin-top:8px" onclick="closePersonEdit()">취소</button>
+  </div>
+</div>
+
+
+<div id="quickDayModal" class="quick-day-modal" onclick="closeQuickDayModal(event)">
+  <div class="quick-day-box" onclick="event.stopPropagation()">
+    <div class="quick-day-head">
+      <strong id="quickDayTitle">날짜 선택</strong>
+      <button class="quick-day-close" type="button" onclick="closeQuickDayModal()">×</button>
+    </div>
+    <div class="quick-day-sub">이 날짜에 무엇을 추가하시겠습니까?</div>
+    <div class="quick-day-actions">
+      <button class="quick-add-btn" type="button" onclick="quickAddAppointment()">
+        <span class="ico">◷</span>
+        <b>약속 추가</b>
+        <span>미팅 · 병원 · 식사 · 개인 일정</span>
+      </button>
+      <button class="quick-add-btn anniv" type="button" onclick="quickAddAnniversary()">
+        <span class="ico">♡</span>
+        <b>기념일 추가</b>
+        <span>생일 · 결혼기념일 · 제사 등</span>
+      </button>
+    </div>
+    <button id="quickDayViewBtn" class="quick-view-btn" type="button" onclick="quickViewDayEvents()" style="display:none">
+      이 날짜의 기존 일정 보기
+    </button>
   </div>
 </div>
 
@@ -2310,13 +2376,13 @@ function renderCalendar(){
     const todayClass = isToday ? "today-cell" : "";
 
 html += `
-  <div class="day-cell ${dayClass} ${todayClass}" onclick="showDayEvents(${day})">
+  <div class="day-cell ${dayClass} ${todayClass}" onclick="openQuickDayAdd(${day})">
     <div class="day-num">${day}</div>
 `;
 
     dayEvents.slice(0,2).forEach(ev=>{
       html += `
-        <div class="cal-event ${ev.itemType === "appointment" ? "appointment" : ""}">
+        <div class="cal-event ${ev.itemType === "appointment" ? "appointment" : ""}" onclick="event.stopPropagation();showDayEvents(${day})">
           ${ev.title || ev.eventName || ev.eventType}
           <span class="lunar-text">${ev.displayDateText || ev.date}</span>
         </div>
@@ -2406,6 +2472,81 @@ function cleanEventMessage(ev){
 
   return text;
 }
+
+
+let quickSelectedDay = null;
+
+function openQuickDayAdd(day){
+  quickSelectedDay = Number(day);
+  const modal = document.getElementById("quickDayModal");
+  const title = document.getElementById("quickDayTitle");
+  const viewBtn = document.getElementById("quickDayViewBtn");
+  const count = currentMonthEvents.filter(e => Number(e.day) === quickSelectedDay).length;
+
+  title.textContent = `${currentYear}년 ${currentMonth}월 ${quickSelectedDay}일`;
+  viewBtn.style.display = count > 0 ? "block" : "none";
+  if(count > 0) viewBtn.textContent = `이 날짜의 기존 일정 ${count}건 보기`;
+
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeQuickDayModal(e){
+  if(e && e.target !== e.currentTarget) return;
+  const modal = document.getElementById("quickDayModal");
+  if(modal) modal.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function quickDateText(){
+  return `${currentYear}-${String(currentMonth).padStart(2,"0")}-${String(quickSelectedDay).padStart(2,"0")}`;
+}
+
+function quickAddAppointment(){
+  const date = quickDateText();
+  closeQuickDayModal();
+
+  const btn = document.querySelector('.side-item[onclick*="appointmentSec"]') ||
+              document.querySelector('.tab[onclick*="appointmentSec"]');
+  showSection("appointmentSec", btn);
+
+  const input = document.getElementById("appointmentDate");
+  if(input) input.value = date;
+
+  setTimeout(()=>{
+    const title = document.getElementById("appointmentTitle");
+    if(title){ title.focus(); title.scrollIntoView({behavior:"smooth", block:"center"}); }
+  },80);
+}
+
+function quickAddAnniversary(){
+  const month = currentMonth;
+  const day = quickSelectedDay;
+  closeQuickDayModal();
+
+  const btn = document.querySelector('.side-item[onclick*="anniv"]') ||
+              document.querySelector('.tab[onclick*="anniv"]');
+  showSection("anniv", btn);
+
+  const monthInput = document.getElementById("eventMonth");
+  const dayInput = document.getElementById("eventDay");
+  const calType = document.getElementById("calendarType");
+  if(monthInput) monthInput.value = month;
+  if(dayInput) dayInput.value = day;
+  if(calType) calType.value = "양력";
+
+  setTimeout(()=>{
+    const person = document.getElementById("personSearch");
+    if(person){ person.focus(); person.scrollIntoView({behavior:"smooth", block:"center"}); }
+  },80);
+}
+
+function quickViewDayEvents(){
+  const day = quickSelectedDay;
+  closeQuickDayModal();
+  showDayEvents(day);
+}
+
 
 function showDayEvents(day){
   const list = currentMonthEvents.filter(e => Number(e.day) === day);
