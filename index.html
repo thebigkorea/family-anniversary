@@ -1152,6 +1152,21 @@ body{margin:0!important;padding:0!important;background:#f4f8fd!important;}
 .day-cell:not(.empty):hover{background:#f8fbff}
 @media(max-width:600px){.quick-day-actions{grid-template-columns:1fr}}
 
+
+/* ===== 대한민국 공휴일/국경일 표시 ===== */
+.day-cell.kr-holiday{background:#fff8f8}
+.day-cell.kr-holiday .day-num{color:#e53935;font-weight:800}
+.kr-holiday-label{
+  margin-top:5px;padding:3px 6px;border-radius:6px;
+  background:#ffe9e9;color:#d93025;font-size:10px;font-weight:700;
+  line-height:1.25;white-space:normal
+}
+.kr-national-label{
+  margin-top:5px;padding:3px 6px;border-radius:6px;
+  background:#fff3e0;color:#d96b00;font-size:10px;font-weight:700;
+  line-height:1.25;white-space:normal
+}
+
 </style>
 </head>
 
@@ -2293,6 +2308,44 @@ async function loadMonthlyCalendar(force=false){
   }
 }
 
+
+/* ===== 2026 대한민국 공휴일/국경일 =====
+   기준: 우주항공청/한국천문연구원 2026년 월력요항
+   제헌절은 국경일이지만 공휴일이 아니므로 별도 표시
+*/
+const KR_CALENDAR_DAYS = {
+  2026: {
+    "01-01": {name:"신정", type:"holiday"},
+    "02-16": {name:"설날 연휴", type:"holiday"},
+    "02-17": {name:"설날", type:"holiday"},
+    "02-18": {name:"설날 연휴", type:"holiday"},
+    "03-01": {name:"삼일절", type:"holiday"},
+    "03-02": {name:"대체공휴일", type:"holiday"},
+    "05-05": {name:"어린이날", type:"holiday"},
+    "05-24": {name:"부처님오신날", type:"holiday"},
+    "05-25": {name:"대체공휴일", type:"holiday"},
+    "06-03": {name:"전국동시지방선거", type:"holiday"},
+    "06-06": {name:"현충일", type:"holiday"},
+    "07-17": {name:"제헌절", type:"national"},
+    "08-15": {name:"광복절", type:"holiday"},
+    "08-17": {name:"대체공휴일", type:"holiday"},
+    "09-24": {name:"추석 연휴", type:"holiday"},
+    "09-25": {name:"추석", type:"holiday"},
+    "09-26": {name:"추석 연휴", type:"holiday"},
+    "10-03": {name:"개천절", type:"holiday"},
+    "10-05": {name:"대체공휴일", type:"holiday"},
+    "10-09": {name:"한글날", type:"holiday"},
+    "12-25": {name:"성탄절", type:"holiday"}
+  }
+};
+
+function getKrCalendarDay(year, month, day){
+  const y = KR_CALENDAR_DAYS[year];
+  if(!y) return null;
+  const key = `${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+  return y[key] || null;
+}
+
 function renderCalendar(){
   const grid = document.getElementById("calendarGrid");
   const weekNames = ["일","월","화","수","목","금","토"];
@@ -2326,11 +2379,17 @@ function renderCalendar(){
       (now.getMonth() + 1) === currentMonth &&
       now.getDate() === day;
     const todayClass = isToday ? "today-cell" : "";
+    const krDay = getKrCalendarDay(currentYear, currentMonth, day);
+    const holidayClass = krDay && krDay.type === "holiday" ? "kr-holiday" : "";
 
 html += `
-  <div class="day-cell ${dayClass} ${todayClass}" onclick="showDayEvents(${day})">
+  <div class="day-cell ${dayClass} ${todayClass} ${holidayClass}" onclick="showDayEvents(${day})">
     <div class="day-num">${day}</div>
 `;
+    if(krDay){
+      const labelClass = krDay.type === "holiday" ? "kr-holiday-label" : "kr-national-label";
+      html += `<div class="${labelClass}">${krDay.name}</div>`;
+    }
 
     dayEvents.slice(0,2).forEach(ev=>{
       html += `
